@@ -396,3 +396,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+Machine-Learning/Base_Informações/
+Machine-Learning/Images/
+Machine-Learning/recortes_flair_50x50/
+Machine-Learning/recortes_T1_32x32/
+Machine-Learning/recortes_T1_50x50/
