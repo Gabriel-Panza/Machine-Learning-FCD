@@ -398,7 +398,8 @@ FodyWeavers.xsd
 *.sln.iml
 
 Base_Informações/
-Images/
-recortes_flair_50x50/
-recortes_T1_32x32/
-recortes_T1_50x50/
+Old Data/Images/
+Old Data/recortes_flair_50x50/
+Old Data/recortes_T1_32x32/
+Old Data/recortes_T1_50x50/
+New Data/Patients_Displasya/
