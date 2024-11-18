@@ -144,30 +144,31 @@ for name in folders:
         
             # Dividir a fatia rotacionada em esquerda e direita
             midpoint = rotated_slice.shape[1] // 2
-            left_half = rotated_slice[:, :midpoint]
-            right_half = rotated_slice[:, midpoint:]
+            left_half = rotated_slice[:, 19:midpoint+61]
+            right_half = rotated_slice[:, midpoint-59:(2*midpoint) - 17]
 
             # Inverter horizontalmente o lado direito
             right_half_flipped = np.fliplr(right_half)
 
             # Dividir as metades esquerda e direita horizontalmente em duas partes
-            horizontal_mid_left = left_half.shape[0] // 2
-            horizontal_mid_right = right_half_flipped.shape[0] // 2
-            left_top = left_half[:horizontal_mid_left, :]
-            left_bottom = left_half[horizontal_mid_left:, :]
-            right_top = right_half_flipped[:horizontal_mid_right, :]
-            right_bottom = right_half_flipped[horizontal_mid_right:, :]
+            horizontal_mid_left = (left_half.shape[0]) // 2
+            horizontal_mid_right = (right_half_flipped.shape[0]) // 2
+            
+            left_top = left_half[20:horizontal_mid_left-26, :]
+            left_bottom = left_half[horizontal_mid_left+27:2*horizontal_mid_left - 19, :]
+            right_top = right_half_flipped[20:horizontal_mid_right-26, :]
+            right_bottom = right_half_flipped[horizontal_mid_right+27:2*horizontal_mid_right - 19, :]
 
             # Dividir cada quadrante em 2 subquadrantes (totalizando 8 divisões)
-            left_top_left = left_top[:, :left_top.shape[1] // 2]
-            left_top_right = left_top[:, left_top.shape[1] // 2:]
-            left_bottom_left = left_bottom[:, :left_bottom.shape[1] // 2]
-            left_bottom_right = left_bottom[:, left_bottom.shape[1] // 2:]
-            right_top_left = right_top[:, :right_top.shape[1] // 2]
-            right_top_right = right_top[:, right_top.shape[1] // 2:]
-            right_bottom_left = right_bottom[:, :right_bottom.shape[1] // 2]
-            right_bottom_right = right_bottom[:, right_bottom.shape[1] // 2:]
-
+            left_top_left = left_top[:, :(left_top.shape[1] // 2)]
+            left_top_right = left_top[:, (left_top.shape[1] // 2):]
+            left_bottom_left = left_bottom[:, :(left_bottom.shape[1] // 2)]
+            left_bottom_right = left_bottom[:, (left_bottom.shape[1] // 2):]
+            right_top_left = right_top[:, :(right_top.shape[1] // 2)]
+            right_top_right = right_top[:, (right_top.shape[1] // 2):]
+            right_bottom_left = right_bottom[:, :(right_bottom.shape[1] // 2)]
+            right_bottom_right = right_bottom[:, (right_bottom.shape[1] // 2):]
+            
             # Lista com todas as subimagens e identificações
             subimages = [
                 (left_top_left, "left_top_left"),
@@ -181,7 +182,7 @@ for name in folders:
             ]
 
             # Salvar cada subimagem como um arquivo NIfTI separado
-            for subimage, position in subimages:
+            for subimage, position in subimages:            
                 # Definir o diretório de saída com base na posição
                 if position.startswith("left"):
                     output_path = os.path.join(output_dir_left_slice, f"{position}.nii.gz")
@@ -192,7 +193,8 @@ for name in folders:
                 subimage_nii = nib.Nifti1Image(subimage, affine=np.eye(4))
                 
                 # Salvar o arquivo NIfTI
-                nib.save(subimage_nii, output_path)
+                if (subimage.size>0 and subimage is not None):
+                    nib.save(subimage_nii, output_path)
             
             output_dir_lesion_left_slice = os.path.join(output_dir_lesion_left, f"Slice{slice_idx}")
             output_dir_lesion_right_slice = os.path.join(output_dir_lesion_right, f"Slice{slice_idx}")
@@ -202,19 +204,20 @@ for name in folders:
             
             # Dividir a fatia rotacionada em esquerda e direita
             midpoint_lesion = rotated_lesion_slice.shape[1] // 2
-            left_half_lesion = rotated_lesion_slice[:, :midpoint_lesion]
-            right_half_lesion = rotated_lesion_slice[:, midpoint_lesion:]
+            left_half_lesion = rotated_lesion_slice[:, 19:midpoint_lesion+61]
+            right_half_lesion = rotated_lesion_slice[:, midpoint_lesion-59:(2*midpoint_lesion) - 17]
 
             # Inverter horizontalmente o lado direito
             right_half_lesion_flipped = np.fliplr(right_half_lesion)
 
             # Dividir as metades esquerda e direita horizontalmente em duas partes
-            horizontal_mid_left_lesion = left_half_lesion.shape[0] // 2
-            horizontal_mid_right_lesion = right_half_lesion_flipped.shape[0] // 2
-            left_top_lesion = left_half_lesion[:horizontal_mid_left_lesion, :]
-            left_bottom_lesion = left_half_lesion[horizontal_mid_left_lesion:, :]
-            right_top_lesion = right_half_lesion_flipped[:horizontal_mid_right_lesion, :]
-            right_bottom_lesion = right_half_lesion_flipped[horizontal_mid_right_lesion:, :]
+            horizontal_mid_left_lesion = (left_half_lesion.shape[0]) // 2
+            horizontal_mid_right_lesion = (right_half_lesion_flipped.shape[0]) // 2
+            
+            left_top_lesion = left_half_lesion[20:horizontal_mid_left_lesion-26, :]
+            left_bottom_lesion = left_half_lesion[horizontal_mid_left_lesion+27:2*horizontal_mid_left_lesion - 19, :]
+            right_top_lesion = right_half_lesion_flipped[20:horizontal_mid_right_lesion-26, :]
+            right_bottom_lesion = right_half_lesion_flipped[horizontal_mid_right_lesion+27:2*horizontal_mid_right_lesion - 19, :]
 
             # Dividir cada quadrante em 2 subquadrantes (totalizando 8 divisões)
             left_top_left_lesion = left_top_lesion[:, :left_top_lesion.shape[1] // 2]
@@ -250,6 +253,7 @@ for name in folders:
                 subimage_nii = nib.Nifti1Image(subimage, affine=np.eye(4))
                 
                 # Salvar o arquivo NIfTI
-                nib.save(subimage_nii, output_path_lesion)
+                if (subimage.size>0 and subimage is not None):
+                    nib.save(subimage_nii, output_path_lesion)
                 
     print(f"Total de fatias processadas do paciente {name}: {processed_slices}")
