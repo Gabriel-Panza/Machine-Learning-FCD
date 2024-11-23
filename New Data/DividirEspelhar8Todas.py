@@ -9,7 +9,7 @@ folders = [
     "sub-16E03", "sub-16G09", "sub-16I12", "sub-19F09", "sub-19G04",
     "sub-22F14", "sub-25B08", "sub-26B09", "sub-29D03", "sub-31F07",
     "sub-34J06", "sub-35E12", "sub-36K02", "sub-41D08", "sub-42B05",
-    "sub-44H05", "sub-51C05", "sub-52K04", "sub-54K08", "sub-56E13",
+    "sub-44H05", "sub-51C05", "sub-52K04", "sub-54K08" "sub-56E13",
     "sub-57D04", "sub-59E09", "sub-59G00", "sub-60G06", "sub-60K04",
     "sub-71C07", "sub-72I02", "sub-72K02", "sub-76E02", "sub-76J09",
     "sub-79H07", "sub-83K08", "sub-85I05", "sub-86G08",
@@ -25,11 +25,11 @@ for name in folders:
         "Patients_Displasya/{name}/ses-01/anat/{name}_ses-01_acq-mpr_run-01_desc-reg_desc-biascorr_desc-brainext_T1w.nii.gz",
         "Patients_Displasya/{name}/ses-01/anat/{name}_ses-01_acq-vol_run-01_desc-reg_desc-biascorr_desc-brainext_T1w.nii.gz",
         "Patients_Displasya/{name}/ses-01/anat/{name}_ses-01_acq-posgado_desc-reg_desc-biascorr_desc-brainext_T1w.nii.gz",
-        "Patients_Displasya/{name}/ses-02/anat/{name}_ses-02_acq-vol_desc-reg_desc-biascorr_desc-brainext_T1w.nii.gz",
-        "Patients_Displasya/{name}/ses-02/anat/{name}_ses-02_acq-vbm_desc-reg_desc-biascorr_desc-brainext_T1w.nii.gz",
-        "Patients_Displasya/{name}/ses-02/anat/{name}_ses-02_desc-reg_desc-biascorr_desc-brainext_T1w.nii.gz",
-        "Patients_Displasya/{name}/ses-02/anat/{name}_ses-02_acq-mpr_desc-reg_desc-biascorr_desc-brainext_T1w.nii.gz",
-        "Patients_Displasya/{name}/ses-02/anat/{name}_ses-02_acq-posgado_desc-reg_desc-biascorr_desc-brainext_T1w.nii.gz"
+        "Patients_Displasya/{name}/ses-01/anat/{name}_ses-01_desc-reg_desc-biascorr_desc-brainext_FLAIR.nii",
+        "Patients_Displasya/{name}/ses-01/anat/{name}_ses-01_run-01_desc-reg_desc-biascorr_desc-brainext_FLAIR.nii",
+        "Patients_Displasya/{name}/ses-01/anat/{name}_ses-01_acq-vista_desc-reg_desc-biascorr_desc-brainext_FLAIR.nii",
+        "Patients_Displasya/{name}/ses-01/anat/{name}_ses-01_acq-mpr_run-04_desc-reg_desc-biascorr_desc-brainext_T1w.nii.gz",
+        "Patients_Displasya/{name}/ses-01/anat/{name}_ses-01_acq-vol_run-04_desc-reg_desc-biascorr_desc-brainext_T1w.nii.gz",
     ]
     img = None
     for pattern in file_patterns:
@@ -75,16 +75,9 @@ for name in folders:
         "Patients_Displasya/{name}/ses-01/anat/{name} Label ses-01 T1.seg.nrrd",
         "Patients_Displasya/{name}/ses-01/anat/{name} Label ses-02 T1.seg.nrrd",
         "Patients_Displasya/{name}/ses-01/anat/{name} Label T2.seg.nrrd",
-        "Patients_Displasya/{name}/ses-02/anat/{name} Label FLAIR Questionvel.seg.nrrd",
-        "Patients_Displasya/{name}/ses-02/anat/{name} Label FLAIR.seg.nrrd",
-        "Patients_Displasya/{name}/ses-02/anat/{name} Label T1.seg.nrrd",
-        "Patients_Displasya/{name}/ses-02/anat/{name} Label T2.seg.nrrd",
         "Patients_Displasya/{name}/ses-01/anat/{name} FLAIR Label.seg.nrrd",
         "Patients_Displasya/{name}/ses-01/anat/{name} T1 Label.seg.nrrd",
         "Patients_Displasya/{name}/ses-01/anat/{name} T2 Label.seg.nrrd",
-        "Patients_Displasya/{name}/ses-02/anat/{name} FLAIR Label.seg.nrrd",
-        "Patients_Displasya/{name}/ses-02/anat/{name} T1 Label.seg.nrrd",
-        "Patients_Displasya/{name}/ses-02/anat/{name} T2 Label.seg.nrrd"
     ]
     lesion_mask = None
     for pattern in file_patterns_lesion:
