@@ -60,7 +60,7 @@ def plot_lesions_combined(lesion_mask_path_left, lesion_mask_path_right, side_pa
                 view -= 1
             plt.suptitle(f"Fatias {view + 1} - Rotacionada e Dividida", fontsize=16)
             plt.show(block=False)
-            plt.pause(3)
+            plt.pause(1)
             plt.close()
 
             cont += 1
