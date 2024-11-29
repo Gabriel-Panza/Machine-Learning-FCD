@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import nibabel as nib
 
 # Função para carregar e plotar fatias com lesão
+# Função para carregar e plotar fatias com lesão
 def plot_lesions_combined(lesion_mask_path_left, lesion_mask_path_right, side_path_left, side_path_right):
     # Loop pelos arquivos nas pastas
     cont = 1
@@ -33,26 +34,28 @@ def plot_lesions_combined(lesion_mask_path_left, lesion_mask_path_right, side_pa
             rotated_slice_right = np.rot90(data_right, k=-1)
             rotated_lesion_slice_left = np.rot90(lesion_data_left, k=-1)
             rotated_lesion_slice_right = np.rot90(lesion_data_right, k=-1)
-            
+
             # Configurar a figura e os subplots
             fig, axes = plt.subplots(1, 4, figsize=(16, 5))
 
             # Plotar fatia esquerda com sobreposição de lesão, se houver
             axes[0].imshow(rotated_slice_left, cmap='gray', origin='lower')
-            axes[0].set_title(f"Lado Esquerdo")
+            axes[0].set_title(f"Lado Esquerdo\n{slice_left}")
             axes[0].axis('off')
 
             # Plotar fatia direita
             axes[1].imshow(rotated_slice_right, cmap='gray', origin='lower')
-            axes[1].set_title("Lado Direito")
+            axes[1].set_title(f"Lado Direito\n{slice_right}")
             axes[1].axis('off')
 
+            # Lesões lado esquerdo
             axes[2].imshow(rotated_lesion_slice_left, cmap="gray", alpha=0.5, origin="lower")
-            axes[2].set_title(f"{'Lesion' if np.any(rotated_lesion_slice_left == 1) else 'No Lesion'}")
+            axes[2].set_title(f"{'Lesion' if np.any(rotated_lesion_slice_left == 1) else 'No Lesion'}\n{slice_lesion_left}")
             axes[2].axis('off')
-        
+
+            # Lesões lado direito
             axes[3].imshow(rotated_lesion_slice_right, cmap="gray", alpha=0.5, origin="lower")
-            axes[3].set_title(f"{'Lesion' if np.any(rotated_lesion_slice_right == 1) else 'No Lesion'}")
+            axes[3].set_title(f"{'Lesion' if np.any(rotated_lesion_slice_right == 1) else 'No Lesion'}\n{slice_lesion_right}")
             axes[3].axis('off')
             
             view = cont // 4
@@ -64,6 +67,7 @@ def plot_lesions_combined(lesion_mask_path_left, lesion_mask_path_right, side_pa
             plt.close()
 
             cont += 1
+
 
 # Diretório base
 base_dir = "Contralateral"
