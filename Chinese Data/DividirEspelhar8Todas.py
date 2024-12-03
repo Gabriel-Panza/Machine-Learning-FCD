@@ -22,7 +22,7 @@ def calculate_label(subimage, threshold=0.009):
     else:
         return "label0"
 
-imagens = "Pacientes com Mascara"
+imagens = "Total de pacientes"
 mascara = "Mascaras"
 
 total_label1 = []
@@ -31,9 +31,9 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
     data = nib.load(os.path.join(imagens, img)).get_fdata()
     lesion_data = nib.load(os.path.join(mascara, mask)).get_fdata()
     data = np.transpose(data, (2, 0, 1))
-    lesion_data = np.transpose(lesion_data, (1, 2, 0))
-    # print(data.shape)
-    # print(lesion_data.shape)
+    lesion_data = np.transpose(lesion_data, (2, 0, 1))
+    print(data.shape)
+    print(lesion_data.shape)
     if (lesion_data.shape[2]>data.shape[2]):
         continue
     
@@ -62,7 +62,7 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
     for slice_idx in range(lesion_data.shape[2]):
         # Pega a lesão da fatia inteira
         lesion_slice_data = lesion_data[:, :, slice_idx]
-        
+                
         # Rotacionar a fatia em -90 graus
         rotated_lesion_slice = np.rot90(lesion_slice_data, k=-1)
         
@@ -117,22 +117,23 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
             horizontal_mid_left_lesion = (left_half_lesion.shape[0]) // 2
             horizontal_mid_right_lesion = (right_half_lesion_flipped.shape[0]) // 2
             
-            left_top_lesion = left_half_lesion[58:horizontal_mid_left_lesion, :]
-            left_bottom_lesion = left_half_lesion[horizontal_mid_left_lesion:2*horizontal_mid_left_lesion-58, :]
-            right_top_lesion = right_half_lesion_flipped[58:horizontal_mid_right_lesion, :]
-            right_bottom_lesion = right_half_lesion_flipped[horizontal_mid_right_lesion:2*horizontal_mid_right_lesion-58, :]
+            left_top_lesion = left_half_lesion[26:horizontal_mid_left_lesion, :]
+            left_bottom_lesion = left_half_lesion[horizontal_mid_left_lesion:2*horizontal_mid_left_lesion-26, :]
+            right_top_lesion = right_half_lesion_flipped[26:horizontal_mid_right_lesion, :]
+            right_bottom_lesion = right_half_lesion_flipped[horizontal_mid_right_lesion:2*horizontal_mid_right_lesion-26, :]
 
             # Dividir cada quadrante em 2 subquadrantes (totalizando 8 divisões)
-            left_top_left_lesion = left_top_lesion[:, 3:left_top_lesion.shape[1] // 2 + 10]
-            left_top_right_lesion = left_top_lesion[:, left_top_lesion.shape[1] // 2 - 10:left_top_lesion.shape[1]-3]
-            left_bottom_left_lesion = left_bottom_lesion[:, 3:left_bottom_lesion.shape[1] // 2 + 10]
-            left_bottom_right_lesion = left_bottom_lesion[:, left_bottom_lesion.shape[1] // 2 - 10:left_top_lesion.shape[1]-3]
-            right_top_left_lesion = right_top_lesion[:, 3:right_top_lesion.shape[1] // 2 + 10]
-            right_top_right_lesion = right_top_lesion[:, right_top_lesion.shape[1] // 2 - 10:left_top_lesion.shape[1]-3]
-            right_bottom_left_lesion = right_bottom_lesion[:, 3:right_bottom_lesion.shape[1] // 2 + 10]
-            right_bottom_right_lesion = right_bottom_lesion[:, right_bottom_lesion.shape[1] // 2 - 10:left_top_lesion.shape[1]-3]
+            left_top_left_lesion = left_top_lesion[:, :left_top_lesion.shape[1] // 2 + 23]
+            left_top_right_lesion = left_top_lesion[:, left_top_lesion.shape[1] // 2 - 23:]
+            left_bottom_left_lesion = left_bottom_lesion[:, :left_bottom_lesion.shape[1] // 2 + 23]
+            left_bottom_right_lesion = left_bottom_lesion[:, left_bottom_lesion.shape[1] // 2 - 23:]
+            right_top_left_lesion = right_top_lesion[:, :right_top_lesion.shape[1] // 2 + 23]
+            right_top_right_lesion = right_top_lesion[:, right_top_lesion.shape[1] // 2 - 23:]
+            right_bottom_left_lesion = right_bottom_lesion[:, :right_bottom_lesion.shape[1] // 2 + 23]
+            right_bottom_right_lesion = right_bottom_lesion[:, right_bottom_lesion.shape[1] // 2 - 23:]
 
             # print(left_top_left_lesion.shape, left_top_right_lesion.shape, left_bottom_left_lesion.shape, left_bottom_right_lesion.shape, right_top_left_lesion.shape, right_top_right_lesion.shape, right_bottom_left_lesion.shape, right_bottom_right_lesion.shape)
+            
             if calculate_label(left_top_left_lesion) == "label1":
                 count_label1 +=1
 

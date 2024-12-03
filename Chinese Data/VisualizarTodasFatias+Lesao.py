@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import nibabel as nib
 
 # Função para carregar e plotar fatias com lesão
-# Função para carregar e plotar fatias com lesão
 def plot_lesions_combined(lesion_mask_path_left, lesion_mask_path_right, side_path_left, side_path_right):
     # Loop pelos arquivos nas pastas
     cont = 1

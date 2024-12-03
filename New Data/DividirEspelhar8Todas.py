@@ -28,13 +28,13 @@ mascara = "Mascaras"
 
 total_label1 = []
 
-for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):    
+for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.nii.gz'))], [f for f in os.listdir(mascara) if f.endswith(('.nrrd', '.nii', '.nii.gz'))]):    
     data = nib.load(os.path.join(imagens, img)).get_fdata()
     lesion_data, _ = nrrd.read(os.path.join(mascara, mask))
     data = np.transpose(data, (2, 0, 1))
-    lesion_data = np.transpose(lesion_data, (1, 2, 0))
-    print(data.shape)
-    print(lesion_data.shape)
+    lesion_data = np.transpose(lesion_data, (2, 0, 1))
+    # print(data.shape)
+    # print(lesion_data.shape)
     if (lesion_data.shape[2]>data.shape[2]):
         continue
     # Definir o limite para considerar os pixels não pretos
@@ -49,8 +49,8 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
     # Diretório de saída para salvar as fatias
     output_dir_left = os.path.join(f"Contralateral/{img.split('_')[0]}", "left")
     output_dir_right = os.path.join(f"Contralateral/{img.split('_')[0]}", "right")
-    output_dir_lesion_left = os.path.join(f"Contralateral/{mask.split('_')[0]}", "lesion_left")
-    output_dir_lesion_right = os.path.join(f"Contralateral/{mask.split('_')[0]}", "lesion_right")
+    output_dir_lesion_left = os.path.join(f"Contralateral/{mask.split(' ')[0]}", "lesion_left")
+    output_dir_lesion_right = os.path.join(f"Contralateral/{mask.split(' ')[0]}", "lesion_right")
     os.makedirs(output_dir_left, exist_ok=True)
     os.makedirs(output_dir_right, exist_ok=True)
     os.makedirs(output_dir_lesion_left, exist_ok=True)
@@ -107,8 +107,8 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
             
             # Dividir a fatia rotacionada em esquerda e direita
             midpoint_lesion = rotated_lesion_slice.shape[1] // 2
-            left_half_lesion = rotated_lesion_slice[:, 2:midpoint_lesion]
-            right_half_lesion = rotated_lesion_slice[:, midpoint_lesion:(2*midpoint_lesion) - 2]
+            left_half_lesion = rotated_lesion_slice[:, :midpoint_lesion+32]
+            right_half_lesion = rotated_lesion_slice[:, midpoint_lesion-32:(2*midpoint_lesion)]
 
             # Inverter horizontalmente o lado direito
             right_half_lesion_flipped = np.fliplr(right_half_lesion)
@@ -117,22 +117,23 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
             horizontal_mid_left_lesion = (left_half_lesion.shape[0]) // 2
             horizontal_mid_right_lesion = (right_half_lesion_flipped.shape[0]) // 2
             
-            left_top_lesion = left_half_lesion[58:horizontal_mid_left_lesion, :]
-            left_bottom_lesion = left_half_lesion[horizontal_mid_left_lesion:2*horizontal_mid_left_lesion-58, :]
-            right_top_lesion = right_half_lesion_flipped[58:horizontal_mid_right_lesion, :]
-            right_bottom_lesion = right_half_lesion_flipped[horizontal_mid_right_lesion:2*horizontal_mid_right_lesion-58, :]
+            left_top_lesion = left_half_lesion[38:horizontal_mid_left_lesion, :]
+            left_bottom_lesion = left_half_lesion[horizontal_mid_left_lesion:2*horizontal_mid_left_lesion-38, :]
+            right_top_lesion = right_half_lesion_flipped[38:horizontal_mid_right_lesion, :]
+            right_bottom_lesion = right_half_lesion_flipped[horizontal_mid_right_lesion:2*horizontal_mid_right_lesion-38, :]
 
             # Dividir cada quadrante em 2 subquadrantes (totalizando 8 divisões)
-            left_top_left_lesion = left_top_lesion[:, 3:left_top_lesion.shape[1] // 2 + 10]
-            left_top_right_lesion = left_top_lesion[:, left_top_lesion.shape[1] // 2 - 10:left_top_lesion.shape[1]-3]
-            left_bottom_left_lesion = left_bottom_lesion[:, 3:left_bottom_lesion.shape[1] // 2 + 10]
-            left_bottom_right_lesion = left_bottom_lesion[:, left_bottom_lesion.shape[1] // 2 - 10:left_top_lesion.shape[1]-3]
-            right_top_left_lesion = right_top_lesion[:, 3:right_top_lesion.shape[1] // 2 + 10]
-            right_top_right_lesion = right_top_lesion[:, right_top_lesion.shape[1] // 2 - 10:left_top_lesion.shape[1]-3]
-            right_bottom_left_lesion = right_bottom_lesion[:, 3:right_bottom_lesion.shape[1] // 2 + 10]
-            right_bottom_right_lesion = right_bottom_lesion[:, right_bottom_lesion.shape[1] // 2 - 10:left_top_lesion.shape[1]-3]
+            left_top_left_lesion = left_top_lesion[:, 3:left_top_lesion.shape[1] // 2 + 20]
+            left_top_right_lesion = left_top_lesion[:, left_top_lesion.shape[1] // 2 - 20:left_top_lesion.shape[1]-3]
+            left_bottom_left_lesion = left_bottom_lesion[:, 3:left_bottom_lesion.shape[1] // 2 + 20]
+            left_bottom_right_lesion = left_bottom_lesion[:, left_bottom_lesion.shape[1] // 2 - 20:left_top_lesion.shape[1]-3]
+            right_top_left_lesion = right_top_lesion[:, 3:right_top_lesion.shape[1] // 2 + 20]
+            right_top_right_lesion = right_top_lesion[:, right_top_lesion.shape[1] // 2 - 20:left_top_lesion.shape[1]-3]
+            right_bottom_left_lesion = right_bottom_lesion[:, 3:right_bottom_lesion.shape[1] // 2 + 20]
+            right_bottom_right_lesion = right_bottom_lesion[:, right_bottom_lesion.shape[1] // 2 - 20:left_top_lesion.shape[1]-3]
 
-            # print(left_top_left_lesion.shape, left_top_right_lesion.shape, left_bottom_left_lesion.shape, left_bottom_right_lesion.shape, right_top_left_lesion.shape, right_top_right_lesion.shape, right_bottom_left_lesion.shape, right_bottom_right_lesion.shape)
+            print(left_top_left_lesion.shape, left_top_right_lesion.shape, left_bottom_left_lesion.shape, left_bottom_right_lesion.shape, right_top_left_lesion.shape, right_top_right_lesion.shape, right_bottom_left_lesion.shape, right_bottom_right_lesion.shape)
+            
             if calculate_label(left_top_left_lesion) == "label1":
                 count_label1 +=1
 
@@ -156,6 +157,7 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
 
             if calculate_label(right_bottom_right_lesion) == "label1":
                 count_label1 +=1
+                
             print(f"Total de subimagens com label 1: {count_label1}")
             
             # Lista com todas as subimagens e identificações
@@ -197,22 +199,22 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
             horizontal_mid_left = (left_half.shape[0]) // 2
             horizontal_mid_right = (right_half_flipped.shape[0]) // 2
             
-            left_top = left_half[26:horizontal_mid_left, :]
-            left_bottom = left_half[horizontal_mid_left:2*horizontal_mid_left-26, :]
-            right_top = right_half_flipped[26:horizontal_mid_right, :]
-            right_bottom = right_half_flipped[horizontal_mid_right:2*horizontal_mid_right-26, :]
+            left_top = left_half[38:horizontal_mid_left, :]
+            left_bottom = left_half[horizontal_mid_left:2*horizontal_mid_left-38, :]
+            right_top = right_half_flipped[38:horizontal_mid_right, :]
+            right_bottom = right_half_flipped[horizontal_mid_right:2*horizontal_mid_right-38, :]
 
             # Dividir cada quadrante em 2 subquadrantes (totalizando 8 divisões)
-            left_top_left = left_top[:, :(left_top.shape[1] // 2)+23]
-            left_top_right = left_top[:, (left_top.shape[1] // 2)-23:]
-            left_bottom_left = left_bottom[:, :(left_bottom.shape[1] // 2)+23]
-            left_bottom_right = left_bottom[:, (left_bottom.shape[1] // 2)-23:]
-            right_top_left = right_top[:, :(right_top.shape[1] // 2)+23]
-            right_top_right = right_top[:, (right_top.shape[1] // 2)-23:]
-            right_bottom_left = right_bottom[:, :(right_bottom.shape[1] // 2)+23]
-            right_bottom_right = right_bottom[:, (right_bottom.shape[1] // 2)-23:]
+            left_top_left = left_top[:, :(left_top.shape[1] // 2)+34]
+            left_top_right = left_top[:, (left_top.shape[1] // 2)-34:]
+            left_bottom_left = left_bottom[:, :(left_bottom.shape[1] // 2)+34]
+            left_bottom_right = left_bottom[:, (left_bottom.shape[1] // 2)-34:]
+            right_top_left = right_top[:, :(right_top.shape[1] // 2)+34]
+            right_top_right = right_top[:, (right_top.shape[1] // 2)-34:]
+            right_bottom_left = right_bottom[:, :(right_bottom.shape[1] // 2)+34]
+            right_bottom_right = right_bottom[:, (right_bottom.shape[1] // 2)-34:]
                 
-            # print(left_top_left.shape, left_top_right.shape, left_bottom_left.shape, left_bottom_right.shape, right_top_left.shape, right_top_right.shape, right_bottom_left.shape, right_bottom_right.shape)
+            print(left_top_left.shape, left_top_right.shape, left_bottom_left.shape, left_bottom_right.shape, right_top_left.shape, right_top_right.shape, right_bottom_left.shape, right_bottom_right.shape)
             
             # Lista com todas as subimagens e identificações
             subimages = [
