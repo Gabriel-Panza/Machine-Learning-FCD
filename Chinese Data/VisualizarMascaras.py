@@ -1,9 +1,8 @@
 import nibabel as nib
 import os
-import numpy as np
 import matplotlib.pyplot as plt
 
-paciente_original = "Total de Pacientes"
+paciente_original = "Total de pacientes"
 mascara = "Mascaras"
 
 for pac, masc in zip(os.listdir(paciente_original), os.listdir(mascara)):

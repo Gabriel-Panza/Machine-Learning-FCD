@@ -3,6 +3,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 import nibabel as nib
 
+def calculate_label(subimage, threshold=0.009):
+    """
+    Determina o label da subimagem com base no percentual de fundo não-preto.
+    :param subimage: Array da subimagem.
+    :param threshold: Percentual mínimo de fundo não-preto para considerar como label 1.
+    :return: int indicando o label.
+    """
+    # Total de pixels na subimagem
+    total_pixels = subimage.size
+    # Número de pixels não-preto
+    non_zero_pixels = np.count_nonzero(subimage)
+    # Proporção de pixels não-preto
+    non_black_ratio = non_zero_pixels / total_pixels if total_pixels > 0 else 0
+    
+    # Verifica se há lesão e se o fundo não-preto é maior que o limiar
+    if np.any(subimage == 1) and non_black_ratio >= threshold:
+        return 1
+    else:
+        return 0
+
 # Função para carregar e plotar fatias com lesão
 def plot_lesions_combined(lesion_mask_path_left, lesion_mask_path_right, side_path_left, side_path_right):
     # Loop pelos arquivos nas pastas
@@ -28,31 +48,23 @@ def plot_lesions_combined(lesion_mask_path_left, lesion_mask_path_right, side_pa
             lesion_right = nib.load(file_path_right_lesion)
             lesion_data_right = lesion_right.get_fdata()
             
-            # Rotacionar as fatias
-            rotated_slice_left = np.rot90(data_left, k=-1)
-            rotated_slice_right = np.rot90(data_right, k=-1)
-            rotated_lesion_slice_left = np.rot90(lesion_data_left, k=-1)
-            rotated_lesion_slice_right = np.rot90(lesion_data_right, k=-1)
-            
             # Configurar a figura e os subplots
-            fig, axes = plt.subplots(1, 4, figsize=(16, 5))
+            _, axes = plt.subplots(1, 4, figsize=(16, 5))
 
-            # Plotar fatia esquerda com sobreposição de lesão, se houver
-            axes[0].imshow(rotated_slice_left, cmap='gray', origin='lower')
+            axes[0].imshow(data_left, cmap='gray', origin='lower')
             axes[0].set_title(f"Lado Esquerdo")
             axes[0].axis('off')
 
-            # Plotar fatia direita
-            axes[1].imshow(rotated_slice_right, cmap='gray', origin='lower')
-            axes[1].set_title("Lado Direito")
+            axes[1].imshow(data_right, cmap='gray', origin='lower')
+            axes[1].set_title("Lado Direito Flippado")
             axes[1].axis('off')
 
-            axes[2].imshow(rotated_lesion_slice_left, cmap="gray", alpha=0.5, origin="lower")
-            axes[2].set_title(f"{'Lesion' if np.any(rotated_lesion_slice_left == 1) else 'No Lesion'}")
+            axes[2].imshow(lesion_data_left, cmap="gray", alpha=0.5, origin="lower")
+            axes[2].set_title(f"{'Lesion' if calculate_label(lesion_data_left) else 'No Lesion'}")
             axes[2].axis('off')
         
-            axes[3].imshow(rotated_lesion_slice_right, cmap="gray", alpha=0.5, origin="lower")
-            axes[3].set_title(f"{'Lesion' if np.any(rotated_lesion_slice_right == 1) else 'No Lesion'}")
+            axes[3].imshow(lesion_data_right, cmap="gray", alpha=0.5, origin="lower")
+            axes[3].set_title(f"{'Lesion' if calculate_label(lesion_data_right) else 'No Lesion'}")
             axes[3].axis('off')
             
             view = cont // 4
