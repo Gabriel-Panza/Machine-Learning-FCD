@@ -67,8 +67,8 @@ def plot_lesions_combined(lesion_mask_path_left, lesion_mask_path_right, side_pa
             axes[3].set_title(f"{'Lesion' if calculate_label(lesion_data_right) else 'No Lesion'}")
             axes[3].axis('off')
             
-            view = cont // 4
-            if (cont % 4 == 0):
+            view = cont // 8
+            if (cont % 8 == 0):
                 view -= 1
             plt.suptitle(f"Fatias {view + 1} - Rotacionada e Dividida", fontsize=16)
             plt.show(block=False)
