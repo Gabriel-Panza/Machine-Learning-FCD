@@ -5,23 +5,71 @@ import nrrd
 from nibabel.orientations import io_orientation, axcodes2ornt, apply_orientation
 
 def load_axial_view(nii_file):
+    """
+    Carrega um arquivo NIfTI e garante que os dados estejam na orientação axial padrão.
+    """
     # Carregar o arquivo NIfTI
     img = nib.load(nii_file)
     data = img.get_fdata()
-    
+    affine = img.affine
+
     # Verificar a orientação atual da imagem
-    current_orientation = io_orientation(img.affine)
+    current_orientation = io_orientation(affine)
     axial_orientation = axcodes2ornt(('R', 'A', 'S'))  # Orientação padrão para axial
-    
-    # Verificar se a orientação atual é diferente da axial
-    if not (current_orientation == axial_orientation).all():
-        # Reorientar os dados para axial
-        reoriented_data = apply_orientation(data, nib.orientations.ornt_transform(current_orientation, axial_orientation))
+
+    # Transformação de orientação necessária
+    if not np.array_equal(current_orientation, axial_orientation):
+        # Obter a transformação necessária para ajustar a orientação
+        transform = nib.orientations.ornt_transform(current_orientation, axial_orientation)
+        reoriented_data = apply_orientation(data, transform)
+        
+        # Atualizar a matriz affine para corresponder à nova orientação
+        new_affine = affine @ nib.orientations.inv_ornt_aff(transform, data.shape)
     else:
         reoriented_data = data
+        new_affine = affine
+
+    # Retornar os dados reorientados e a nova matriz affine
+    return nib.Nifti1Image(reoriented_data, new_affine)
+
+def load_axial_view_nrrd(nrrd_file):
+    """
+    Carrega um arquivo NRRD e garante que os dados estejam na orientação axial padrão.
+    """
+    # Carregar o arquivo NRRD e obter os dados e cabeçalho
+    data, header = nrrd.read(nrrd_file)
     
-    # Retornar os dados reorientados na visão axial
-    return reoriented_data
+    # Extrair a matriz affine do cabeçalho NRRD
+    if 'space directions' in header:
+        space_directions = np.array(header['space directions'])
+    else:
+        raise ValueError("Arquivo NRRD não contém informações de orientação no cabeçalho.")
+    
+    # Extrair o espaço de origem, se disponível
+    space_origin = header.get('space origin', np.zeros(3))
+    
+    affine = np.eye(4)
+    affine[:3, :3] = space_directions
+    affine[:3, 3] = space_origin
+
+    # Verificar a orientação atual
+    current_orientation = io_orientation(affine)
+    axial_orientation = axcodes2ornt(('R', 'A', 'S'))  # Orientação padrão para axial
+    
+    # Transformação de orientação, se necessária
+    if not np.array_equal(current_orientation, axial_orientation):
+        transform = nib.orientations.ornt_transform(current_orientation, axial_orientation)
+        reoriented_data = apply_orientation(data, transform)
+        
+        # Ajustar a affine para a nova orientação
+        new_affine = affine @ nib.orientations.inv_ornt_aff(transform, data.shape)
+    else:
+        reoriented_data = data
+        new_affine = affine
+
+    # Retornar os dados reorientados e a nova matriz affine
+    return nib.Nifti1Image(reoriented_data, new_affine)
+
 
 def calculate_label(subimage, threshold=0.01):
     """
@@ -87,7 +135,7 @@ def divide_16_pieces(rotated_slice):
     horizontal_mid_left = left_half.shape[0] // 2
     horizontal_mid_right = right_half_flipped.shape[0] // 2
 
-    left_left = left_half[:horizontal_mid_left+5, :]
+    left_left = left_half[:horizontal_mid_left+6, :]
     left_right = left_half[horizontal_mid_left-5:, :]
     right_left = right_half_flipped[:horizontal_mid_right+6, :]
     right_right = right_half_flipped[horizontal_mid_right-5:, :]
@@ -130,12 +178,22 @@ mascara = "Mascaras"
 total_label1 = []
 
 for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.nii.gz'))], [f for f in os.listdir(mascara) if f.endswith(('.nrrd', '.nii', '.nii.gz'))]):    
-    data = load_axial_view(os.path.join(imagens, img))
-    lesion_data, _ = nrrd.read(os.path.join(mascara, mask))
+    data_img = load_axial_view(os.path.join(imagens, img))
+    lesion_data_img = load_axial_view_nrrd(os.path.join(mascara, mask))
+    
+    data = data_img.get_fdata()
+    lesion_data = lesion_data_img.get_fdata()
+    
     data = np.transpose(data, (2, 0, 1))
     lesion_data = np.transpose(lesion_data, (2, 0, 1))
+    
+    # Verifica o formato das imagens
     print(data.shape)
     print(lesion_data.shape)
+    # Verifica as orientações finais
+    print(io_orientation(data_img.affine))
+    print(io_orientation(lesion_data_img.affine))
+
     if (lesion_data.shape[2]>data.shape[2]):
         continue
     
@@ -212,7 +270,7 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
                     count_label1 += 1
             count_label1_posterior = count_label1
             
-            print(f"Total de subimagens com label 1: {count_label1}")
+            #print(f"Total de subimagens com label 1: {count_label1}")
 
             # Lista com todas as subimagens e identificações
             subimages_lesion = [
