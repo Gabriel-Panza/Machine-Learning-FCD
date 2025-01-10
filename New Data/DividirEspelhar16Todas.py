@@ -57,8 +57,8 @@ def adjust_unique_lesion_pieces_with_neighbors(subimages, current_index, total_s
 def divide_16_pieces(rotated_slice):
     # Dividir a fatia ajustada em esquerda e direita
     midpoint = rotated_slice.shape[1] // 2
-    left_half = rotated_slice[:, 2:midpoint]
-    right_half = rotated_slice[:, midpoint:midpoint*2 -2]
+    left_half = rotated_slice[:, 4:midpoint]
+    right_half = rotated_slice[:, midpoint:midpoint*2 -4]
 
     # Inverter horizontalmente o lado direito
     right_half_flipped = np.fliplr(right_half)
@@ -67,36 +67,27 @@ def divide_16_pieces(rotated_slice):
     horizontal_mid_left = left_half.shape[0] // 2
     horizontal_mid_right = right_half_flipped.shape[0] // 2
 
-    top_left = left_half[16:horizontal_mid_left, :]
-    top_right = left_half[horizontal_mid_left:horizontal_mid_left*2 -16, :]
-    bottom_left = right_half_flipped[16:horizontal_mid_right, :]
-    bottom_right = right_half_flipped[horizontal_mid_right:horizontal_mid_right*2 -16, :]
+    top_left = left_half[26:horizontal_mid_left, :]
+    top_right = left_half[horizontal_mid_left:horizontal_mid_left*2 -26, :]
+    bottom_left = right_half_flipped[26:horizontal_mid_right, :]
+    bottom_right = right_half_flipped[horizontal_mid_right:horizontal_mid_right*2 -26, :]
 
     # Dividir cada quadrante em 4 subquadrantes (totalizando 16 divisões)
-    def split_quadrant_left(quadrant):
+    def split_quadrant(quadrant):
         vertical_mid = quadrant.shape[0] // 2
         horizontal_mid = quadrant.shape[1] // 2
         
-        top_left = quadrant[:vertical_mid, :horizontal_mid+2]
-        top_right = quadrant[:vertical_mid, horizontal_mid-2:]
-        bottom_left = quadrant[vertical_mid:, :horizontal_mid+2]
-        bottom_right = quadrant[vertical_mid:, horizontal_mid-2:]
+        top_left = quadrant[:vertical_mid+5, :horizontal_mid+3]
+        top_right = quadrant[:vertical_mid+5, horizontal_mid-3:]
+        bottom_left = quadrant[vertical_mid-5:, :horizontal_mid+3]
+        bottom_right = quadrant[vertical_mid-5:, horizontal_mid-3:]
         
         return top_left, top_right, bottom_left, bottom_right
-    def split_quadrant_right(quadrant):
-        vertical_mid = quadrant.shape[0] // 2
-        horizontal_mid = quadrant.shape[1] // 2
-        
-        top_left = quadrant[:vertical_mid, :horizontal_mid+2]
-        top_right = quadrant[:vertical_mid, horizontal_mid-2:]
-        bottom_left = quadrant[vertical_mid:, :horizontal_mid+2]
-        bottom_right = quadrant[vertical_mid:, horizontal_mid-2:]
-        
-        return top_left, top_right, bottom_left, bottom_right
-    left_left_top_left, left_left_top_right, left_left_bottom_left, left_left_bottom_right = split_quadrant_left(top_left)
-    left_right_top_left, left_right_top_right, left_right_bottom_left, left_right_bottom_right = split_quadrant_left(top_right)
-    right_left_top_left, right_left_top_right, right_left_bottom_left, right_left_bottom_right = split_quadrant_right(bottom_left)
-    right_right_top_left, right_right_top_right, right_right_bottom_left, right_right_bottom_right = split_quadrant_right(bottom_right)
+    
+    left_left_top_left, left_left_top_right, left_left_bottom_left, left_left_bottom_right = split_quadrant(top_left)
+    left_right_top_left, left_right_top_right, left_right_bottom_left, left_right_bottom_right = split_quadrant(top_right)
+    right_left_top_left, right_left_top_right, right_left_bottom_left, right_left_bottom_right = split_quadrant(bottom_left)
+    right_right_top_left, right_right_top_right, right_right_bottom_left, right_right_bottom_right = split_quadrant(bottom_right)
 
     return (left_left_top_left, left_left_top_right, left_left_bottom_left, left_left_bottom_right,
             left_right_top_left, left_right_top_right, left_right_bottom_left, left_right_bottom_right,
@@ -108,8 +99,11 @@ imagens = "Patients_Displasya"
 mascara = "Mascaras"
 
 total_label1 = []
+excluded_patients = ["sub-54K08", "sub-87G01", "sub-89A03", "sub-90K10"]
 
 for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.nii.gz'))], [f for f in os.listdir(mascara) if f.endswith(('.nrrd', '.nii', '.nii.gz'))]):    
+    if img.split('_')[0] in excluded_patients:
+        continue
     data = nib.load(os.path.join(imagens, img)).get_fdata()
     lesion_data, _ = nrrd.read(os.path.join(mascara, mask))
     
@@ -171,8 +165,6 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
                 count_label1 += 1
         count_label1_posterior = count_label1
         
-        #print(f"Total de subimagens com label 1: {count_label1}")
-
         # Lista com todas as subimagens e identificações
         subimages_lesion = [
             (left_top_top_left, f"left_1_lesion_{calculate_label(left_top_top_left)}"),
