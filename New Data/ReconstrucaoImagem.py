@@ -108,7 +108,7 @@ def load_data_with_pairs(folder):
 
 def build_image(img, mask):
     # Tamanho dos patches
-    patch_size = 47
+    patch_size = 50
 
     # Inicializar a matriz para a imagem e a máscara reconstruídas
     imagem_reconstruida = np.zeros((4 * patch_size, 4 * patch_size), dtype=np.uint8)
