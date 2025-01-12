@@ -136,57 +136,58 @@ def build_image(img, mask):
 
 def plot_patient_slices(pdf_filename, patients, images_left, images_right, mask_left, mask_right):
     with PdfPages(pdf_filename) as pdf:
-            for patient in patients:
-                cont = 0            
-                
-                classificacao = []
-                vetor_left_img = []
-                vetor_left_mask = []
-                vetor_right_img = []
-                vetor_right_mask = []
-                tmp_vetor_left_img = []
-                tmp_vetor_left_mask = []
-                tmp_vetor_right_img = []
-                tmp_vetor_right_mask = []
-                
-                for img_left, img_right, msk_left, msk_right in zip(images_left[patient], images_right[patient], mask_left[patient], mask_right[patient]):
-                    tmp_vetor_left_img.append(img_left)
-                    tmp_vetor_left_mask.append(msk_left)
-                    tmp_vetor_right_img.append(np.fliplr(img_right))
-                    tmp_vetor_right_mask.append(np.fliplr(msk_right))
-                
-                    cont+=1
-                    if cont%8 ==0:
-                        vetor_left_img.append(tmp_vetor_left_img)
-                        vetor_left_mask.append(tmp_vetor_left_mask)
-                        vetor_right_img.append(tmp_vetor_right_img)
-                        vetor_right_mask.append(tmp_vetor_right_mask)
-                        tmp_vetor_left_img = []
-                        tmp_vetor_left_mask = []
-                        tmp_vetor_right_img = []
-                        tmp_vetor_right_mask = []
-                
-                cont = 0
-                for i in range(len(vetor_left_img)):
-                    imagem_reconstruida, mascara_reconstruida = build_image(vetor_left_img[i]+vetor_right_img[i], vetor_left_mask[i]+vetor_right_mask[i])
-                    if (np.any(mascara_reconstruida) == 1):
-                        # Configurar a figura
-                        fig, axs = plt.subplots(2, 1, figsize=(4, 4))
+        for patient in patients:
+            cont = 0            
+            
+            classificacao = []
+            vetor_left_img = []
+            vetor_left_mask = []
+            vetor_right_img = []
+            vetor_right_mask = []
+            tmp_vetor_left_img = []
+            tmp_vetor_left_mask = []
+            tmp_vetor_right_img = []
+            tmp_vetor_right_mask = []
+            
+            for img_left, img_right, msk_left, msk_right in zip(images_left[patient], images_right[patient], mask_left[patient], mask_right[patient]):
+                tmp_vetor_left_img.append(img_left)
+                tmp_vetor_left_mask.append(msk_left)
+                tmp_vetor_right_img.append(np.fliplr(img_right))
+                tmp_vetor_right_mask.append(np.fliplr(msk_right))
+            
+                cont+=1
+                if cont%8 ==0:
+                    vetor_left_img.append(tmp_vetor_left_img)
+                    vetor_left_mask.append(tmp_vetor_left_mask)
+                    vetor_right_img.append(tmp_vetor_right_img)
+                    vetor_right_mask.append(tmp_vetor_right_mask)
+                    tmp_vetor_left_img = []
+                    tmp_vetor_left_mask = []
+                    tmp_vetor_right_img = []
+                    tmp_vetor_right_mask = []
+            
+            cont = 0
+            for i in range(len(vetor_left_img)):
+                imagem_reconstruida, mascara_reconstruida = build_image(vetor_left_img[i]+vetor_right_img[i], vetor_left_mask[i]+vetor_right_mask[i])
+                if (np.any(mascara_reconstruida) == 1):
+                    # Configurar a figura
+                    fig, axs = plt.subplots(2, 1, figsize=(4, 4))
 
-                        axs[0].imshow(np.flipud(imagem_reconstruida), cmap='gray')
-                        axs[0].set_title(f'{patient}')
-                        axs[0].axis('off')
-                        axs[1].imshow(np.flipud(mascara_reconstruida), cmap='gray')
-                        axs[1].axis('off')
-                        
-                        # Adicionar ao PDF
-                        pdf.savefig(fig)
-                        plt.close(fig)
-                
-            print(f"As imagens foram salvas no arquivo PDF {pdf_filename} com sucesso.")
+                    axs[0].imshow(np.flipud(imagem_reconstruida), cmap='gray')
+                    axs[0].set_title(f'{patient}')
+                    axs[0].axis('off')
+                    axs[1].imshow(np.flipud(mascara_reconstruida), cmap='gray')
+                    axs[1].axis('off')
+                    
+                    # Adicionar ao PDF
+                    pdf.savefig(fig)
+                    plt.close(fig)
+            
+        print(f"As imagens foram salvas no arquivo PDF {pdf_filename} com sucesso.")
 
-folder = "Contralateral"
-pdf_filename="Pacientes_Virado.pdf"
+folder = "Contralateral" # Imagens recortadas
+folder_full_images = "Fatias"
+pdf_filename="Pacientes_Reconstruidos.pdf"
 images_left_by_patient, images_right_by_patient, labels_pair_by_patient, mask_left_by_patient, mask_right_by_patient, patient_ids = load_data_with_pairs(folder)
 plot_patient_slices(
     pdf_filename=pdf_filename,

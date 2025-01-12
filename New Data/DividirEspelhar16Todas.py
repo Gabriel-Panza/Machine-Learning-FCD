@@ -57,8 +57,8 @@ def adjust_unique_lesion_pieces_with_neighbors(subimages, current_index, total_s
 def divide_16_pieces(rotated_slice):
     # Dividir a fatia ajustada em esquerda e direita
     midpoint = rotated_slice.shape[1] // 2
-    left_half = rotated_slice[:, 10:midpoint]
-    right_half = rotated_slice[:, midpoint:midpoint*2 - 10]
+    left_half = rotated_slice[:, 24:midpoint]
+    right_half = rotated_slice[:, midpoint:midpoint*2 - 24]
 
     # Inverter horizontalmente o lado direito
     right_half_flipped = np.fliplr(right_half)
@@ -67,20 +67,20 @@ def divide_16_pieces(rotated_slice):
     horizontal_mid_left = left_half.shape[0] // 2
     horizontal_mid_right = right_half_flipped.shape[0] // 2
 
-    top_left = left_half[24:horizontal_mid_left, :]
-    top_right = left_half[horizontal_mid_left:horizontal_mid_left*2 -24, :]
-    bottom_left = right_half_flipped[24:horizontal_mid_right, :]
-    bottom_right = right_half_flipped[horizontal_mid_right:horizontal_mid_right*2 -24, :]
+    top_left = left_half[20:horizontal_mid_left, :]
+    top_right = left_half[horizontal_mid_left:horizontal_mid_left*2 -20, :]
+    bottom_left = right_half_flipped[20:horizontal_mid_right, :]
+    bottom_right = right_half_flipped[horizontal_mid_right:horizontal_mid_right*2 -20, :]
 
     # Dividir cada quadrante em 4 subquadrantes (totalizando 16 divisões)
     def split_quadrant(quadrant):
         vertical_mid = quadrant.shape[0] // 2
         horizontal_mid = quadrant.shape[1] // 2
         
-        top_left = quadrant[:vertical_mid+4, :horizontal_mid+6]
-        top_right = quadrant[:vertical_mid+4, horizontal_mid-6:]
-        bottom_left = quadrant[vertical_mid-4:, :horizontal_mid+6]
-        bottom_right = quadrant[vertical_mid-4:, horizontal_mid-6:]
+        top_left = quadrant[:vertical_mid+2, :horizontal_mid+13]
+        top_right = quadrant[:vertical_mid+2, horizontal_mid-13:]
+        bottom_left = quadrant[vertical_mid-2:, :horizontal_mid+13]
+        bottom_right = quadrant[vertical_mid-2:, horizontal_mid-13:]
         
         return top_left, top_right, bottom_left, bottom_right
     
@@ -114,7 +114,7 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
     # Verifica o formato das imagens
     print(data[2].shape)
     print(lesion_data[2].shape)
-
+    
     if (lesion_data.shape[2]>data.shape[2]):
         continue
 

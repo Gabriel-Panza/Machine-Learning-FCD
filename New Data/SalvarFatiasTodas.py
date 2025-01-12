@@ -81,7 +81,7 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
 
     # Diretório de saída para salvar as fatias
     output_dir = f"Fatias/{img.split('_')[0]}"
-    output_dir_lesion = f"Fatias/{mask.split(' ')[0]}"
+    output_dir_lesion = f"Mask_Fatias/{mask.split(' ')[0]}"
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(output_dir_lesion, exist_ok=True)
     
