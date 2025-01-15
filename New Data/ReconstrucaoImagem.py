@@ -134,6 +134,26 @@ def build_image(img, mask):
             
     return imagem_reconstruida, mascara_reconstruida
 
+def calculate_label(image, threshold=0.003125):
+    """
+    Determina o label da subimagem com base no percentual de fundo não-preto.
+    :param subimage: Array da subimagem.
+    :param threshold: Percentual mínimo de fundo não-preto para considerar como label 1.
+    :return: String indicando o label.
+    """
+    # Total de pixels na subimagem
+    total_pixels = image.size
+    # Número de pixels não-preto
+    non_zero_pixels = np.count_nonzero(image)
+    # Proporção de pixels não-preto
+    non_black_ratio = non_zero_pixels / total_pixels if total_pixels > 0 else 0
+    
+    # Verifica se há lesão e se o fundo não-preto é maior que o limiar
+    if np.any(image == 1) and non_black_ratio >= threshold:
+        return 1
+    else:
+        return 0
+    
 def plot_patient_slices(pdf_filename, patients, images_left, images_right, mask_left, mask_right):
     with PdfPages(pdf_filename) as pdf:
         for patient in patients:
@@ -169,7 +189,7 @@ def plot_patient_slices(pdf_filename, patients, images_left, images_right, mask_
             cont = 0
             for i in range(len(vetor_left_img)):
                 imagem_reconstruida, mascara_reconstruida = build_image(vetor_left_img[i]+vetor_right_img[i], vetor_left_mask[i]+vetor_right_mask[i])
-                if (np.any(mascara_reconstruida) == 1):
+                if (calculate_label(mascara_reconstruida)):
                     # Configurar a figura
                     fig, axs = plt.subplots(2, 1, figsize=(4, 4))
 
@@ -187,7 +207,8 @@ def plot_patient_slices(pdf_filename, patients, images_left, images_right, mask_
 
 folder = "Contralateral" # Imagens recortadas
 folder_full_images = "Fatias"
-pdf_filename="Pacientes_Reconstruidos.pdf"
+pdf_filename="Pdf/Pacientes_Reconstruidos.pdf"
+
 images_left_by_patient, images_right_by_patient, labels_pair_by_patient, mask_left_by_patient, mask_right_by_patient, patient_ids = load_data_with_pairs(folder)
 plot_patient_slices(
     pdf_filename=pdf_filename,
