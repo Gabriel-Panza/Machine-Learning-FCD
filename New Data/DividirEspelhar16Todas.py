@@ -36,20 +36,20 @@ def divide_16_pieces(rotated_slice):
     horizontal_mid_left = left_half.shape[0] // 2
     horizontal_mid_right = right_half_flipped.shape[0] // 2
 
-    top_left = left_half[16:horizontal_mid_left, :]
-    top_right = left_half[horizontal_mid_left:horizontal_mid_left*2 -16, :]
-    bottom_left = right_half_flipped[16:horizontal_mid_right, :]
-    bottom_right = right_half_flipped[horizontal_mid_right:horizontal_mid_right*2 -16, :]
+    top_left = left_half[6:horizontal_mid_left, :]
+    top_right = left_half[horizontal_mid_left:horizontal_mid_left*2 -6, :]
+    bottom_left = right_half_flipped[6:horizontal_mid_right, :]
+    bottom_right = right_half_flipped[horizontal_mid_right:horizontal_mid_right*2 -6, :]
 
     # Dividir cada quadrante em 4 subquadrantes (totalizando 16 divisões)
     def split_quadrant(quadrant):
         vertical_mid = quadrant.shape[0] // 2
         horizontal_mid = quadrant.shape[1] // 2
         
-        top_left = quadrant[:vertical_mid, :horizontal_mid+4]
-        top_right = quadrant[:vertical_mid, horizontal_mid-4:]
-        bottom_left = quadrant[vertical_mid:, :horizontal_mid+4]
-        bottom_right = quadrant[vertical_mid:, horizontal_mid-4:]
+        top_left = quadrant[:vertical_mid, :horizontal_mid]
+        top_right = quadrant[:vertical_mid, horizontal_mid:]
+        bottom_left = quadrant[vertical_mid:, :horizontal_mid]
+        bottom_right = quadrant[vertical_mid:, horizontal_mid:]
         
         return top_left, top_right, bottom_left, bottom_right
     

@@ -88,13 +88,13 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
     # Loop para cada fatia axial
     for slice_idx in range(lesion_data.shape[2]):
         # Pega a lesão da fatia axial atual
-        lesion_slice_data = lesion_data[:, :, slice_idx]
+        lesion_slice_data = lesion_data[16:233-17, 18:197-19, slice_idx]
         lesion_slice_data = np.where(lesion_slice_data>0.9, 1, 0)
 
         output_dir_lesion_slice = os.path.join(output_dir_lesion, f"Slice{slice_idx}.nii.gz")
         
         # Pega a fatia axial atual
-        slice_data = data[:, :, slice_idx]            
+        slice_data = data[16:233-17, 18:197-19, slice_idx]            
 
         output_dir_slice = os.path.join(output_dir, f"Slice{slice_idx}.nii.gz")
         

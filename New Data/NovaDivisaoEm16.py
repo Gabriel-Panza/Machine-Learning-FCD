@@ -104,53 +104,57 @@ def divide_16_pieces(slice, slice_mask):
     lesion_bottom_right_top_left, lesion_bottom_right_top_right, lesion_bottom_right_bottom_left, lesion_bottom_right_bottom_right = split_quadrant_lesion(lesion_bottom_right)
     
     # Unindo todas as coordenadas
-    all_coordinates = top_left_coords + top_right_coords + bottom_left_coords + bottom_right_coords
+    all_coordinates = top_left_coords + bottom_left_coords + top_right_coords + bottom_right_coords
 
-    quadrants_around = [top_left_top_left, top_left_top_right, top_left_bottom_left, top_right_top_left, top_right_top_right, top_right_bottom_left, bottom_left_top_left, bottom_left_bottom_left, bottom_left_bottom_right, bottom_right_top_left, bottom_right_bottom_left, bottom_right_bottom_right]
-    quadrants_around_lesion = [lesion_top_left_top_left, lesion_top_left_top_right, lesion_top_left_bottom_left, lesion_top_right_top_left, lesion_top_right_top_right, lesion_top_right_bottom_left, lesion_bottom_left_top_left, lesion_bottom_left_bottom_left, lesion_bottom_left_bottom_right, lesion_bottom_right_top_left, lesion_bottom_right_bottom_left, lesion_bottom_right_bottom_right]
-    # for idx, recorte in enumerate(quadrants_around):
-    #     interactions = 0
-    #     max_iterations = recorte.size/2
-    #     if not np.any(recorte):
-    #         recorte = []
-    #         all_coordinates[idx] = (0,0)
-    #         continue
-    #     elif np.any(recorte):  # Garantir que recorte não está vazio
-    #         while not (np.any(recorte[0, :]) and np.any(recorte[-1, :]) and np.any(recorte[:, 0]) and np.any(recorte[:, -1])):
-    #             if not np.any(recorte[0, :]):
-    #                 recorte = np.roll(recorte, shift=1, axis=0) # Incremento vertical
-    #                 quadrants_around_lesion[idx] = np.roll(quadrants_around_lesion[idx], shift=1, axis=0) 
-    #                 all_coordinates[idx] = (all_coordinates[idx][0] + 1, all_coordinates[idx][1])  
-    #             if not np.any(recorte[:, 0]):
-    #                 recorte = np.roll(recorte, shift=1, axis=1) # Incremento horizontal
-    #                 quadrants_around_lesion[idx] = np.roll(quadrants_around_lesion[idx], shift=1, axis=1)
-    #                 all_coordinates[idx] = (all_coordinates[idx][0], all_coordinates[idx][1] + 1)  
-    #             elif not np.any(recorte[:, -1]):
-    #                 recorte = np.roll(recorte, shift=-1, axis=1) # Decremento horizontal
-    #                 quadrants_around_lesion[idx] = np.roll(quadrants_around_lesion[idx], shift=-1, axis=1)
-    #                 all_coordinates[idx] = (all_coordinates[idx][0], all_coordinates[idx][1] - 1)  
-    #             interactions+=1
-    #             if interactions >= max_iterations:
-    #                 break
+    quadrants_around = [top_left_top_left, top_left_top_right, top_left_bottom_left, top_left_bottom_right, bottom_left_top_left, bottom_left_top_right, bottom_left_bottom_left, bottom_left_bottom_right, top_right_top_left, top_right_top_right, top_right_bottom_left, top_right_bottom_right, bottom_right_top_left, bottom_right_top_right, bottom_right_bottom_left, bottom_right_bottom_right]
+    quadrants_around_lesion = [lesion_top_left_top_left, lesion_top_left_top_right, lesion_top_left_bottom_left, lesion_top_left_bottom_right, lesion_bottom_left_top_left, lesion_bottom_left_top_right, lesion_bottom_left_bottom_left, lesion_bottom_left_bottom_right, lesion_top_right_top_left, lesion_top_right_top_right, lesion_top_right_bottom_left, lesion_top_right_bottom_right, lesion_bottom_right_top_left, lesion_bottom_right_top_right, lesion_bottom_right_bottom_left, lesion_bottom_right_bottom_right]
+    for idx in range(len(quadrants_around)):
+        if (not np.any(quadrants_around[idx]>0)):
+            if idx > 7:
+                quadrants_around[idx-1] = []
+                quadrants_around_lesion[idx-1] = []
+            else:
+                quadrants_around[idx] = []
+                quadrants_around_lesion[idx] = []    
+    for idx in range(8):
+        if len(quadrants_around[idx]) != len(quadrants_around[idx+8]):
+            quadrants_around[idx] = []
+            quadrants_around[idx+8] = []
+            quadrants_around_lesion[idx] = []
+            quadrants_around_lesion[idx+8] = []
+    for idx in range(len(quadrants_around)-1):
+        if (len(quadrants_around[idx]) == 0):
+            if idx > 7:
+                all_coordinates[idx+1] = (-1,-1)
+            else:
+                all_coordinates[idx] = (-1,-1)
 
-    # for i in range (6):
-    #     if i<3:
-    #         if len(quadrants_around[i]) != len(quadrants_around[i+3]):
-    #             quadrants_around[i] == []
-    #             quadrants_around[len(quadrants_around)-1-i] == []
-    #     else:
-    #         if len(quadrants_around[i+3]) != len(quadrants_around[i+6]):
-    #             quadrants_around[i] == []
-    #             quadrants_around[len(quadrants_around)-1-i] == []
+        # elif np.any(recorte):  # Garantir que recorte não está vazio
+        #     while not (np.any(recorte[0, :]) and np.any(recorte[-1, :]) and np.any(recorte[:, 0]) and np.any(recorte[:, -1])):
+        #         if not np.any(recorte[0, :]):
+        #             recorte = np.roll(recorte, shift=1, axis=0) # Incremento vertical
+        #             quadrants_around_lesion[idx] = np.roll(quadrants_around_lesion[idx], shift=1, axis=0) 
+        #             all_coordinates[idx] = (all_coordinates[idx][0] + 1, all_coordinates[idx][1])  
+        #         if not np.any(recorte[:, 0]):
+        #             recorte = np.roll(recorte, shift=1, axis=1) # Incremento horizontal
+        #             quadrants_around_lesion[idx] = np.roll(quadrants_around_lesion[idx], shift=1, axis=1)
+        #             all_coordinates[idx] = (all_coordinates[idx][0], all_coordinates[idx][1] + 1)  
+        #         elif not np.any(recorte[:, -1]):
+        #             recorte = np.roll(recorte, shift=-1, axis=1) # Decremento horizontal
+        #             quadrants_around_lesion[idx] = np.roll(quadrants_around_lesion[idx], shift=-1, axis=1)
+        #             all_coordinates[idx] = (all_coordinates[idx][0], all_coordinates[idx][1] - 1)  
+        #         interactions+=1
+        #         if interactions >= max_iterations:
+        #             break
             
-    return (quadrants_around[0], quadrants_around[1], quadrants_around[2], top_left_bottom_right, 
-            quadrants_around[3], quadrants_around[4], quadrants_around[5], top_right_bottom_right, 
-            quadrants_around[6], bottom_left_top_right, quadrants_around[7], quadrants_around[8], 
-            quadrants_around[9], bottom_right_top_right, quadrants_around[10], quadrants_around[11], 
-            quadrants_around_lesion[0], quadrants_around_lesion[1], quadrants_around_lesion[2], lesion_top_left_bottom_right,
-            quadrants_around_lesion[3], quadrants_around_lesion[4], quadrants_around_lesion[5], lesion_top_right_bottom_right,
-            quadrants_around_lesion[6], lesion_bottom_left_top_right, quadrants_around_lesion[7], quadrants_around_lesion[8],
-            quadrants_around_lesion[9], lesion_bottom_right_top_right, quadrants_around_lesion[10], quadrants_around_lesion[11], 
+    return (quadrants_around[0], quadrants_around[1], quadrants_around[2], quadrants_around[3], 
+            quadrants_around[4], quadrants_around[5], quadrants_around[6], quadrants_around[7], 
+            quadrants_around[8], quadrants_around[9], quadrants_around[10], quadrants_around[11],
+            quadrants_around[12], quadrants_around[13], quadrants_around[14], quadrants_around[15], 
+            quadrants_around_lesion[0], quadrants_around_lesion[1], quadrants_around_lesion[2], quadrants_around_lesion[3],
+            quadrants_around_lesion[4], quadrants_around_lesion[5], quadrants_around_lesion[6], quadrants_around_lesion[7],
+            quadrants_around_lesion[8], quadrants_around_lesion[9], quadrants_around_lesion[10], quadrants_around_lesion[11],
+            quadrants_around_lesion[12], quadrants_around_lesion[13], quadrants_around_lesion[14], quadrants_around_lesion[15], 
             all_coordinates)
 
 
@@ -219,7 +223,10 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
         left_top_top_left, left_top_top_right, left_top_bottom_left, left_top_bottom_right, left_bottom_top_left, left_bottom_top_right, left_bottom_bottom_left, left_bottom_bottom_right, right_top_top_left, right_top_top_right, right_top_bottom_left, right_top_bottom_right, right_bottom_top_left, right_bottom_top_right, right_bottom_bottom_left, right_bottom_bottom_right, lesion_top_left_top_left, lesion_top_left_top_right, lesion_top_left_bottom_left, lesion_top_left_bottom_right, lesion_top_right_top_left, lesion_top_right_top_right, lesion_top_right_bottom_left, lesion_top_right_bottom_right, lesion_bottom_left_top_left, lesion_bottom_left_top_right, lesion_bottom_left_bottom_left, lesion_bottom_left_bottom_right, lesion_bottom_right_top_left, lesion_bottom_right_top_right, lesion_bottom_right_bottom_left, lesion_bottom_right_bottom_right, coordinates = divide_16_pieces(slice_data, lesion_slice_data)
 
         for elem in [left_top_top_left, left_top_top_right, left_top_bottom_left, left_top_bottom_right, left_bottom_top_left, left_bottom_top_right, left_bottom_bottom_left, left_bottom_bottom_right, right_top_top_left, right_top_top_right, right_top_bottom_left, right_top_bottom_right, right_bottom_top_left, right_bottom_top_right, right_bottom_bottom_left, right_bottom_bottom_right]:
-            print(elem.shape)
+            if len(elem)>0:
+                print(elem.shape)
+            else:
+                print(len(elem))
         
         # Lista com todas as subimagens e identificações
         subimages = [
@@ -249,17 +256,19 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
             else:
                 output_path = os.path.join(output_dir_right_slice, f"{position}.nii.gz")
 
-            # Converter o array numpy para um objeto NIfTI
-            subimage_nii = nib.Nifti1Image(subimage, affine=np.eye(4))
-            
             # Salvar o arquivo NIfTI
-            if (len(subimage) != 0 and subimage is not None and subimage is not []):
+            if (len(subimage) > 0):
+                # Converter o array numpy para um objeto NIfTI
+                subimage_nii = nib.Nifti1Image(subimage, affine=np.eye(4))
                 nib.save(subimage_nii, output_path)
                 
         for lesion_part in [lesion_top_left_top_left, lesion_top_left_top_right, lesion_top_left_bottom_left, lesion_top_left_bottom_right, lesion_top_right_top_left, lesion_top_right_top_right, lesion_top_right_bottom_left, lesion_top_right_bottom_right, lesion_bottom_left_top_left, lesion_bottom_left_top_right, lesion_bottom_left_bottom_left, lesion_bottom_left_bottom_right, lesion_bottom_right_top_left, lesion_bottom_right_top_right, lesion_bottom_right_bottom_left, lesion_bottom_right_bottom_right]:
-            print(lesion_part.shape)
-            if calculate_label(lesion_part) == "label1":
-                count_label1 += 1
+            if len(lesion_part)>0:
+                print(lesion_part.shape)
+                if calculate_label(lesion_part) == "label1":
+                    count_label1 += 1
+            else:
+                print(len(lesion_part))
         
         # Lista com todas as subimagens e identificações
         subimages_lesion = [
@@ -289,11 +298,10 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
             else:
                 output_path_lesion = os.path.join(output_dir_lesion_right_slice, f"{position}.nii.gz")
 
-            # Converter o array numpy para um objeto NIfTI
-            subimage_nii = nib.Nifti1Image(subimage, affine=np.eye(4))
-            
             # Salvar o arquivo NIfTI
-            if (len(subimage) != 0 and subimage is not None and subimage is not []):
+            if (len(subimage) > 0):
+                # Converter o array numpy para um objeto NIfTI
+                subimage_nii = nib.Nifti1Image(subimage, affine=np.eye(4))
                 nib.save(subimage_nii, output_path_lesion)
         
         path_coordenadas = f"Coordenadas_grid"

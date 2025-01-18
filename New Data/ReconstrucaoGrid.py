@@ -13,9 +13,7 @@ def load_coordinates(coordinates_path):
         coordinates[patient_id] = []
         for slice_file in sorted(os.listdir(patient_path)):
             slice_path = os.path.join(patient_path, slice_file)
-            lines = 0
             with open(slice_path, 'r') as f:
-                next(f)  # Ignora a primeira linha
                 coords = [tuple(map(int, line.strip().split(','))) for line in f.readlines()]
                 coordinates[patient_id].append(coords)
     return coordinates
@@ -39,48 +37,67 @@ def load_full_image_and_mask(image_path, mask_path):
 
     return images, masks
 
-# Função para calcular o label
-def calculate_label(image, threshold=0.003125):
-    total_pixels = image.size
-    non_zero_pixels = np.count_nonzero(image)
-    non_black_ratio = non_zero_pixels / total_pixels if total_pixels > 0 else 0
-    return 1 if np.any(image == 1) and non_black_ratio >= threshold else 0
-
 # Função para desenhar a imagem com o grid em PDF
 def plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename):
     with PdfPages(pdf_filename) as pdf:
         for patient_id in images.keys():
-            for index, (img, mask) in enumerate(zip(images[patient_id], masks[patient_id])):
-                if calculate_label(mask):
+            index = 0
+            for img, mask in zip(images[patient_id], masks[patient_id]):
+                # # Verificar se existem coordenadas para a fatia atual
+                if patient_id not in coordinates or index >= len(coordinates[patient_id]):
+                    print(f"Aviso: Coordenadas ausentes para o paciente {patient_id}, fatia {index}")
+                    index+=1
+                    continue
+
+
+                # Calcula a proporção de pixels não pretos na fatia
+                brain_pixel_ratio = np.count_nonzero(img) / img.size
+
+                # Só executa se a proporção de pixels não pretos for maior ou igual a 5%
+                if brain_pixel_ratio >= 0.10:
                     plt.figure(figsize=(8, 8))
 
                     # Mostrar a imagem
                     plt.subplot(1, 2, 1)
-                    plt.imshow(np.flipud(img), cmap='gray')
+                    plt.imshow(img, cmap='gray')
                     plt.title(f"{patient_id} - Slice")
-                    for (x_start, y_start) in coordinates[patient_id][index]:
-                        # if x_start == 0 and y_start == 0:
-                        #     continue
-                        plt.plot([y_start, y_start, y_start+49,  y_start+49, y_start], [x_start, x_start+58,  x_start+58, x_start, x_start], 'r')
+                    
+                    # Desenhar os grids usando as coordenadas ajustadas (y1, y2, x1, x2)
+                    for (y1, y2, x1, x2) in coordinates[patient_id][index]:
+                        if y1 == -1 and y2 == -1 and x1 == -1 and x2 == -1:
+                            continue
+                        plt.plot(
+                            [x1, x2, x2, x1, x1],  # Coordenadas horizontais
+                            [y1, y1, y2, y2, y1],  # Coordenadas verticais
+                            'r'
+                        )
 
                     # Mostrar a máscara
                     plt.subplot(1, 2, 2)
-                    plt.imshow(np.flipud(mask), cmap='gray')
+                    plt.imshow(mask, cmap='gray')
                     plt.title(f"{patient_id} - Slice_Mask")
-                    for (x_start, y_start) in coordinates[patient_id][index]:
-                        # if x_start == 0 and y_start == 0:
-                        #     continue
-                        plt.plot([y_start, y_start, y_start+49,  y_start+49, y_start], [x_start, x_start+58,  x_start+58, x_start, x_start], 'r')
+                    
+                    # Desenhar os grids na máscara
+                    for (y1, y2, x1, x2) in coordinates[patient_id][index]:
+                        if y1 == -1 and y2 == -1 and x1 == -1 and x2 == -1:
+                            continue
+                        plt.plot(
+                            [x1, x2, x2, x1, x1],  # Coordenadas horizontais
+                            [y1, y1, y2, y2, y1],  # Coordenadas verticais
+                            'r'
+                        )
 
                     pdf.savefig()
                     plt.close()
+                    index+=1
+            print(f"Paciente {patient_id} gerado com sucesso!")
         print(f"As imagens foram salvas no arquivo PDF {pdf_filename} com sucesso.")
 
 # Caminhos das imagens e máscaras
 image_path = "Fatias"
 mask_path = "Mask_Fatias"
 coordinates_path = "Coordenadas_grid"
-pdf_filename = "Pdf/Pacientes_Reconstruidos_Grid.pdf"
+pdf_filename = "Pdf/Pacientes_com_Grid.pdf"
 
 # Carregar e plotar as imagens
 images, masks = load_full_image_and_mask(image_path, mask_path)
