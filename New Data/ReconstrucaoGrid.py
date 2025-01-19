@@ -48,13 +48,15 @@ def plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename):
                     print(f"Aviso: Coordenadas ausentes para o paciente {patient_id}, fatia {index}")
                     index+=1
                     continue
-
-
-                # Calcula a proporção de pixels não pretos na fatia
-                brain_pixel_ratio = np.count_nonzero(img) / img.size
-
-                # Só executa se a proporção de pixels não pretos for maior ou igual a 5%
-                if brain_pixel_ratio >= 0.10:
+                
+                # Total de pixels na subimagem
+                total_pixels = img.size
+                # Número de pixels não-preto
+                non_zero_pixels = np.count_nonzero(img)
+                # Proporção de pixels não-preto
+                non_black_ratio = non_zero_pixels / total_pixels if total_pixels > 0 else 0
+        
+                if non_black_ratio >= 0.04:
                     plt.figure(figsize=(8, 8))
 
                     # Mostrar a imagem
@@ -89,7 +91,7 @@ def plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename):
 
                     pdf.savefig()
                     plt.close()
-                    index+=1
+                index+=1
             print(f"Paciente {patient_id} gerado com sucesso!")
         print(f"As imagens foram salvas no arquivo PDF {pdf_filename} com sucesso.")
 
