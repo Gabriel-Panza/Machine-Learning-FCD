@@ -91,7 +91,7 @@ def plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename):
 
                     pdf.savefig()
                     plt.close()
-                index+=1
+                    index+=1
             print(f"Paciente {patient_id} gerado com sucesso!")
         print(f"As imagens foram salvas no arquivo PDF {pdf_filename} com sucesso.")
 
