@@ -12,6 +12,7 @@ def load_coordinates(coordinates_path):
         patient_path = os.path.join(coordinates_path, patient_id)
         coordinates[patient_id] = []
         for slice_file in sorted(os.listdir(patient_path)):
+            print(f"SLICE: {slice_file}")
             slice_path = os.path.join(patient_path, slice_file)
             with open(slice_path, 'r') as f:
                 coords = [tuple(map(int, line.strip().split(','))) for line in f.readlines()]
@@ -32,6 +33,7 @@ def load_full_image_and_mask(image_path, mask_path):
         for patch_id, mask_patch_id in zip(os.listdir(patient_path), os.listdir(mask_patient_path)):
             img = nib.load(os.path.join(patient_path, patch_id)).get_fdata()
             mask = nib.load(os.path.join(mask_patient_path, mask_patch_id)).get_fdata()
+            #print(f"patch: {patch_id} e mask: {mask_patch_id}") corrigir ordem 79, 8, 80
             images[patient_id].append(img)
             masks[patient_id].append(mask)
 
@@ -96,10 +98,11 @@ def plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename):
         print(f"As imagens foram salvas no arquivo PDF {pdf_filename} com sucesso.")
 
 # Caminhos das imagens e máscaras
-image_path = "Fatias"
-mask_path = "Mask_Fatias"
-coordinates_path = "Coordenadas_grid"
+image_path = "Fatias" # gerado no SalvarFatiasTodas.py
+mask_path = "Mask_Fatias" # gerado no SalvarFatiasTodas.py
+coordinates_path = "Coordenadas_grid" # gerado no moving_grid.ipynb
 pdf_filename = "Pdf/Pacientes_com_Grid.pdf"
+os.makedirs("pdf_filename", exist_ok=True)
 
 # Carregar e plotar as imagens
 images, masks = load_full_image_and_mask(image_path, mask_path)

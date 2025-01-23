@@ -60,6 +60,7 @@ mascara = "Mascaras"
 excluded_patients = ["sub-54K08", "sub-87G01", "sub-89A03", "sub-90K10"]
 
 for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.nii.gz'))], [f for f in os.listdir(mascara) if f.endswith(('.nrrd', '.nii', '.nii.gz'))]):    
+    #print(f"{img}, {mask}")
     if img.split('_')[0] in excluded_patients:
         continue
     data = nib.load(os.path.join(imagens, img)).get_fdata()
@@ -88,7 +89,7 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
     # Loop para cada fatia axial
     for slice_idx in range(lesion_data.shape[2]):
         # Pega a lesão da fatia axial atual
-        lesion_slice_data = lesion_data[16:233-17, 18:197-19, slice_idx]
+        lesion_slice_data = lesion_data[:, :, slice_idx]
         lesion_slice_data = np.where(lesion_slice_data>0.9, 1, 0)
 
         output_dir_lesion_slice = os.path.join(output_dir_lesion, f"Slice{slice_idx}.nii.gz")
