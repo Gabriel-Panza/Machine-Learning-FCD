@@ -124,10 +124,10 @@ def build_image(img, mask):
 
     # Loop para reconstruir as linhas e colunas
     for i in range(4):  # Linha
-        for j in range(4):  # Coluna
-            idx = correct_order[i * 4 + j]
-            x_start = i * patch_size
-            y_start = j * patch_size
+        for j in range(2):  # Coluna
+            idx = correct_order[i * 2 + j]
+            x_start = i * patch_size 
+            y_start = j * patch_size//2
             
             imagem_reconstruida[x_start:x_start + patch_size, y_start:y_start + patch_size//2] = img[idx]
             mascara_reconstruida[x_start:x_start + patch_size, y_start:y_start + patch_size//2] = mask[idx]
