@@ -24,12 +24,15 @@ def load_full_image_and_mask(image_path, mask_path):
     images = {}
     masks = {}
     patient_ids = []
+    
     for patient_id, mask_id in tqdm(zip(os.listdir(image_path), os.listdir(mask_path)), desc="Carregamento de arquivos NIfTI..."):
+        
         patient_path = os.path.join(image_path, patient_id)
         mask_patient_path = os.path.join(mask_path, mask_id)
         patient_ids.append(patient_id)
         images[patient_id] = []
         masks[patient_id] = []
+
         for patch_id, mask_patch_id in zip(os.listdir(patient_path), os.listdir(mask_patient_path)):
             img = nib.load(os.path.join(patient_path, patch_id)).get_fdata()
             mask = nib.load(os.path.join(mask_patient_path, mask_patch_id)).get_fdata()
@@ -102,9 +105,11 @@ image_path = "Fatias" # gerado no SalvarFatiasTodas.py
 mask_path = "Mask_Fatias" # gerado no SalvarFatiasTodas.py
 coordinates_path = "Coordenadas_grid" # gerado no moving_grid.ipynb
 pdf_filename = "Pdf/Pacientes_com_Grid.pdf"
-os.makedirs("pdf_filename", exist_ok=True)
+os.makedirs("Pdf", exist_ok=True)
 
 # Carregar e plotar as imagens
 images, masks = load_full_image_and_mask(image_path, mask_path)
+
 coordinates = load_coordinates(coordinates_path)
-plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename)
+
+#plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename)

@@ -92,17 +92,17 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
         lesion_slice_data = lesion_data[:, :, slice_idx]
         lesion_slice_data = np.where(lesion_slice_data>0.9, 1, 0)
 
-        output_dir_lesion_slice = os.path.join(output_dir_lesion, f"Slice{slice_idx}.nii.gz")
+        output_dir_lesion_slice = os.path.join(output_dir_lesion, f"Slice_{slice_idx:03}.nii.gz")
         
         # Pega a fatia axial atual
-        slice_data = data[16:233-17, 18:197-19, slice_idx]            
+        slice_data = data[:, :, slice_idx]            
 
-        output_dir_slice = os.path.join(output_dir, f"Slice{slice_idx}.nii.gz")
+        output_dir_slice = os.path.join(output_dir, f"Slice{slice_idx:03}.nii.gz")
         
         processed_slices += 1
 
         # Converter o array numpy para um objeto NIfTI
-        subimage_nii = nib.Nifti1Image(lesion_slice_data, affine=np.eye(4))
+        subimage_nii = nib.Nifti1Image(lesion_slice_data, affine=np.eye(4), dtype=np.int64)
         
         # Salvar o arquivo NIfTI
         if (lesion_slice_data.size>0 and lesion_slice_data is not None):
