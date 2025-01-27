@@ -8,16 +8,28 @@ from matplotlib.backends.backend_pdf import PdfPages
 # Função para carregar as coordenadas dos arquivos txt
 def load_coordinates(coordinates_path):
     coordinates = {}
+
     for patient_id in os.listdir(coordinates_path):
         patient_path = os.path.join(coordinates_path, patient_id)
         coordinates[patient_id] = []
+
         for slice_file in sorted(os.listdir(patient_path)):
             print(f"SLICE: {slice_file}")
             slice_path = os.path.join(patient_path, slice_file)
             with open(slice_path, 'r') as f:
                 coords = [tuple(map(int, line.strip().split(','))) for line in f.readlines()]
                 coordinates[patient_id].append(coords)
+                
     return coordinates
+
+# Função para carregar as coordenadas dos arquivos txt
+def load_one_coordinate(coordinates_path):
+    coordinates = []
+
+    with open(coordinates_path, 'r') as f:
+        coords = [tuple(map(int, line.strip().split(','))) for line in f.readlines()]
+                
+    return coords
 
 # Função para carregar a imagem e a máscara
 def load_full_image_and_mask(image_path, mask_path):
@@ -48,7 +60,7 @@ def plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename):
         for patient_id in images.keys():
             index = 0
             for img, mask in zip(images[patient_id], masks[patient_id]):
-                # # Verificar se existem coordenadas para a fatia atual
+                # Verificar se existem coordenadas para a fatia atual
                 if patient_id not in coordinates or index >= len(coordinates[patient_id]):
                     print(f"Aviso: Coordenadas ausentes para o paciente {patient_id}, fatia {index}")
                     index+=1
@@ -100,6 +112,85 @@ def plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename):
             print(f"Paciente {patient_id} gerado com sucesso!")
         print(f"As imagens foram salvas no arquivo PDF {pdf_filename} com sucesso.")
 
+
+# Função para desenhar a imagem com o grid em PDF
+def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_filename):
+    patients = os.listdir(fatias_dir)
+
+    for patient_id in patients:
+        print(f"paciente: {patient_id}\n\n")
+
+        fatia_path = f"{fatias_dir}/{patient_id}"
+        fatias_names = os.listdir(fatia_path)
+        #print(f"fatias: {fatias_names}\n\n")
+
+        mascara_path = f"{masks_dir}/{patient_id}"
+        #mascaras_names = os.listdir(mascara_path) # tem os mesmos nomes que os arquivos de fatias
+        #print(f"mascaras: {mascaras_names}\n\n")
+
+        grid_path =  f"{grid_dir}/{patient_id}"
+        grids_names = os.listdir(grid_path)
+        #print(f"grids: {grids_names}\n\n")
+
+        for idx in range(len(fatias_names)):
+            #mascaras_names[idx] = mascaras_names[idx].split(".")[0]
+            fatias_names[idx] = fatias_names[idx].split(".")[0]
+
+        for idx in range(len(grids_names)):
+            grids_names[idx] = grids_names[idx].split(".")[0]
+
+        with PdfPages(pdf_filename) as pdf:
+            for slice_img in fatias_names:
+                # Verificar se existem coordenadas para a fatia atual
+                if slice_img not in grids_names:
+                    #print(f"Aviso: Coordenadas ausentes para o paciente {patient_id}: {slice_img}")
+                    continue
+                else:
+                    img_data_path = f"{fatia_path}/{slice_img}.nii.gz"
+                    mask_data_path = f"{mascara_path}/{slice_img}.nii.gz"
+                    grid_data_path = f"{grid_path}/{slice_img}.txt"
+
+                    coordinates = load_one_coordinate(grid_data_path)
+                    #print(f"coordenadas fatia {slice_img}: {coordinates}\n\n")
+
+                    img_data = nib.load(img_data_path).get_fdata()
+                    mask_data = nib.load(mask_data_path).get_fdata()
+
+                    plt.figure(figsize=(8, 8))
+
+                    # Mostrar a imagem
+                    plt.subplot(1, 2, 1)
+                    plt.imshow(img_data, cmap='gray')
+                    plt.title(f"{patient_id} - Slice")
+                    
+                    # Desenhar os grids usando as coordenadas ajustadas (y1, y2, x1, x2)
+                    for (y1, y2, x1, x2) in coordinates:
+                        if y1 == -1 and y2 == -1 and x1 == -1 and x2 == -1:
+                            continue
+                        plt.plot(
+                            [x1, x2, x2, x1, x1],  # Coordenadas horizontais
+                            [y1, y1, y2, y2, y1],  # Coordenadas verticais
+                            'r'
+                        )
+
+                    # Mostrar a máscara
+                    plt.subplot(1, 2, 2)
+                    plt.imshow(mask_data, cmap='gray')
+                    plt.title(f"{patient_id} - Slice_Mask")
+                    
+                    # Desenhar os grids na máscara
+                    for (y1, y2, x1, x2) in coordinates:
+                        if y1 == -1 and y2 == -1 and x1 == -1 and x2 == -1:
+                            continue
+                        plt.plot(
+                            [x1, x2, x2, x1, x1],  # Coordenadas horizontais
+                            [y1, y1, y2, y2, y1],  # Coordenadas verticais
+                            'r'
+                        )
+
+                    pdf.savefig()
+                    plt.close()
+
 # Caminhos das imagens e máscaras
 image_path = "Fatias" # gerado no SalvarFatiasTodas.py
 mask_path = "Mask_Fatias" # gerado no SalvarFatiasTodas.py
@@ -108,8 +199,8 @@ pdf_filename = "Pdf/Pacientes_com_Grid.pdf"
 os.makedirs("Pdf", exist_ok=True)
 
 # Carregar e plotar as imagens
-images, masks = load_full_image_and_mask(image_path, mask_path)
+#images, masks = load_full_image_and_mask(image_path, mask_path)
 
-coordinates = load_coordinates(coordinates_path)
+#coordinates = load_coordinates(coordinates_path)
 
-#plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename)
+plot_images_with_grid_to_pdf_adjusted(image_path, mask_path, coordinates_path, pdf_filename)

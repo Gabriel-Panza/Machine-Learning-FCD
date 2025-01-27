@@ -97,7 +97,7 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
         # Pega a fatia axial atual
         slice_data = data[:, :, slice_idx]            
 
-        output_dir_slice = os.path.join(output_dir, f"Slice{slice_idx:03}.nii.gz")
+        output_dir_slice = os.path.join(output_dir, f"Slice_{slice_idx:03}.nii.gz")
         
         processed_slices += 1
 
