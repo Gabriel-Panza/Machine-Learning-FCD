@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 from tqdm import tqdm
 from matplotlib.backends.backend_pdf import PdfPages
+from time import time
 
 # Função para carregar as coordenadas dos arquivos txt
 def load_coordinates(coordinates_path):
@@ -115,44 +116,39 @@ def plot_images_with_grid_to_pdf(images, masks, coordinates, pdf_filename):
 
 # Função para desenhar a imagem com o grid em PDF
 def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_filename):
+    start_time = time()
     patients = os.listdir(fatias_dir)
 
-    for patient_id in patients:
-        print(f"paciente: {patient_id}\n\n")
+    with PdfPages(pdf_filename) as pdf:
+        for patient_id in patients:
+            patient_start_time = time()
+            print(f"paciente: {patient_id}\n\n")
 
-        fatia_path = f"{fatias_dir}/{patient_id}"
-        fatias_names = os.listdir(fatia_path)
-        #print(f"fatias: {fatias_names}\n\n")
+            fatia_path = f"{fatias_dir}/{patient_id}" #caminho da pasta de fatias para um paciente
+            fatias_names = os.listdir(fatia_path)
 
-        mascara_path = f"{masks_dir}/{patient_id}"
-        #mascaras_names = os.listdir(mascara_path) # tem os mesmos nomes que os arquivos de fatias
-        #print(f"mascaras: {mascaras_names}\n\n")
+            mascara_path = f"{masks_dir}/{patient_id}" #caminho da pasta de mascaras para um paciente
 
-        grid_path =  f"{grid_dir}/{patient_id}"
-        grids_names = os.listdir(grid_path)
-        #print(f"grids: {grids_names}\n\n")
+            grid_path =  f"{grid_dir}/{patient_id}" #caminho da pasta de grids para um paciente
+            grids_names = os.listdir(grid_path)
 
-        for idx in range(len(fatias_names)):
-            #mascaras_names[idx] = mascaras_names[idx].split(".")[0]
-            fatias_names[idx] = fatias_names[idx].split(".")[0]
+            for idx in range(len(fatias_names)):
+                fatias_names[idx] = fatias_names[idx].split(".")[0] #tira o .nii.gz
 
-        for idx in range(len(grids_names)):
-            grids_names[idx] = grids_names[idx].split(".")[0]
+            for idx in range(len(grids_names)):
+                grids_names[idx] = grids_names[idx].split(".")[0] #tira o .txt
 
-        with PdfPages(pdf_filename) as pdf:
             for slice_img in fatias_names:
-                # Verificar se existem coordenadas para a fatia atual
-                if slice_img not in grids_names:
-                    #print(f"Aviso: Coordenadas ausentes para o paciente {patient_id}: {slice_img}")
+                if slice_img not in grids_names: # verifica se existe grid para esta imagem
                     continue
                 else:
+                    # caminho dos dados para esta fatia
                     img_data_path = f"{fatia_path}/{slice_img}.nii.gz"
                     mask_data_path = f"{mascara_path}/{slice_img}.nii.gz"
                     grid_data_path = f"{grid_path}/{slice_img}.txt"
 
+                    # carrega dados para esta fatia
                     coordinates = load_one_coordinate(grid_data_path)
-                    #print(f"coordenadas fatia {slice_img}: {coordinates}\n\n")
-
                     img_data = nib.load(img_data_path).get_fdata()
                     mask_data = nib.load(mask_data_path).get_fdata()
 
@@ -190,6 +186,15 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
 
                     pdf.savefig()
                     plt.close()
+
+            # Calcula o tempo gasto por paciente
+            patient_end_time = time()
+            patient_duration = patient_end_time - patient_start_time
+            print(f"Tempo para o paciente {patient_id}: {patient_duration:.2f} segundos\n")
+
+    end_time = time()
+    total_duration = end_time - start_time
+    print(f"Tempo total de execução: {total_duration:.2f} segundos")
 
 # Caminhos das imagens e máscaras
 image_path = "Fatias" # gerado no SalvarFatiasTodas.py
