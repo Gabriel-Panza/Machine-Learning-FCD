@@ -3,7 +3,7 @@ import nrrd
 import numpy as np
 import os
 
-def calculate_label(subimage, threshold=0.05):
+def calculate_label(subimage, threshold=0.003125):
     """
     Determina o label da subimagem com base no percentual de fundo não-preto.
     :param subimage: Array da subimagem.
@@ -23,64 +23,33 @@ def calculate_label(subimage, threshold=0.05):
     else:
         return "label0"
 
-# Verifica se um pedaço é o único com pixels `1` e ajusta se necessário
-def adjust_unique_lesion_pieces_with_neighbors(subimages, current_index, total_slices, lesion_data):
-    """
-    Ajusta os pedaços da máscara para garantir que nenhum pedaço seja o único com pixels `1`
-    ao analisar os slices anteriores e posteriores.
-    :param subimages: Lista de subimagens (máscaras divididas em 8 pedaços) do slice atual.
-    :param current_index: Índice do slice atual.
-    :param total_slices: Número total de slices disponíveis.
-    :param lesion_data: Dados completos da máscara de lesão.
-    :return: Lista de subimagens ajustadas.
-    """
-    # Contar o número de pedaços com pixels `1` no slice atual
-    has_lesion_current = [np.any(piece == 1) for piece, _ in subimages]
-
-    # Verificar slices anteriores e posteriores
-    has_lesion_before = 0
-    has_lesion_after = 0
-    if current_index > 0:  # Slice anterior
-        has_lesion_before = [np.any(lesion_data[:, :, current_index - 1] == 1)]
-    if current_index < total_slices - 1:  # Slice posterior
-        has_lesion_after = [np.any(lesion_data[:, :, current_index + 1] == 1)]
-
-    # Atualizar peças únicas com pixels `1` no slice atual
-    total_lesion_pieces_current = sum(has_lesion_current) + has_lesion_before + has_lesion_after
-
-    if sum(has_lesion_current) == 1 and total_lesion_pieces_current <= 1: # Se essa condição for satisfeita então o recorte atual com label 1 é um recorte isolado (sem lesão em cima e em baixo dele)
-        unique_piece_index = has_lesion_current.index(True)
-        subimages[unique_piece_index] = (np.zeros_like(subimages[unique_piece_index][0]), subimages[unique_piece_index][1]) # Zero a mascara lesionada isolada
-
-    return subimages
-
 def divide_8_pieces(rotated_slice):
     # Dividir a fatia rotacionada em esquerda e direita
     midpoint = rotated_slice.shape[1] // 2
-    left_half = rotated_slice[:,2:midpoint]
-    right_half = rotated_slice[:, midpoint:2*midpoint - 2]
+    left_half = rotated_slice[:,8:midpoint]
+    right_half = rotated_slice[:, midpoint:2*midpoint - 8]
 
     # Inverter horizontalmente o lado direito
     right_half_flipped = np.fliplr(right_half)
-
+    
     # Dividir as metades esquerda e direita horizontalmente em duas partes
     horizontal_mid_left = (left_half.shape[0]) // 2
     horizontal_mid_right = (right_half_flipped.shape[0]) // 2
     
-    left_top = left_half[20:horizontal_mid_left, :]
-    left_bottom = left_half[horizontal_mid_left:horizontal_mid_left*2-20, :]
-    right_top = right_half_flipped[20:horizontal_mid_right, :]
-    right_bottom = right_half_flipped[horizontal_mid_right:horizontal_mid_right*2-20, :]
+    left_top = left_half[26:horizontal_mid_left, :]
+    left_bottom = left_half[horizontal_mid_left:horizontal_mid_left*2-26, :]
+    right_top = right_half_flipped[26:horizontal_mid_right, :]
+    right_bottom = right_half_flipped[horizontal_mid_right:horizontal_mid_right*2-26, :]
 
     # Dividir cada quadrante em 2 subquadrantes (totalizando 8 divisões)
-    left_top_left = left_top[:, :(left_top.shape[1] // 2)]
-    left_top_right = left_top[:, (left_top.shape[1] // 2):]
-    left_bottom_left = left_bottom[:, :(left_bottom.shape[1] // 2)]
-    left_bottom_right = left_bottom[:, (left_bottom.shape[1] // 2):]
-    right_top_left = right_top[:, :(right_top.shape[1] // 2)]
-    right_top_right = right_top[:, (right_top.shape[1] // 2):]
-    right_bottom_left = right_bottom[:, :(right_bottom.shape[1] // 2)]
-    right_bottom_right = right_bottom[:, (right_bottom.shape[1] // 2):]
+    left_top_left = left_top[:(left_top.shape[1] // 2), :]
+    left_top_right = left_top[(left_top.shape[1] // 2):, :]
+    left_bottom_left = left_bottom[:(left_bottom.shape[1] // 2), :]
+    left_bottom_right = left_bottom[(left_bottom.shape[1] // 2):, :]
+    right_top_left = right_top[:(right_top.shape[1] // 2), :]
+    right_top_right = right_top[(right_top.shape[1] // 2):, :]
+    right_bottom_left = right_bottom[:(right_bottom.shape[1] // 2), :]
+    right_bottom_right = right_bottom[(right_bottom.shape[1] // 2):, :]
     
     return left_top_left, left_top_right, left_bottom_left, left_bottom_right, right_top_left, right_top_right, right_bottom_left, right_bottom_right
 
@@ -116,15 +85,15 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
         lesion_slice_data = lesion_data[:, :, slice_idx]
                 
         # Rotacionar a fatia em -90 graus
-        rotated_lesion_slice = np.rot90(lesion_slice_data, k=-1)
+        rotated_lesion_slice = np.rot90(lesion_slice_data, k=1)
         
         # Selecionar a fatia axial atual
         slice_data = data[:, :, slice_idx]
         
         # Rotacionar a fatia em -90 graus
-        rotated_slice = np.rot90(slice_data, k=-1)
+        rotated_slice = np.rot90(slice_data, k=1)
 
-        if np.count_nonzero(slice_data) != 0:  # Só executa se a fatia tiver pixels não pretos
+        if np.count_nonzero(slice_data) > 0:  # Só executa se a fatia tiver pixels não pretos
             output_dir_left_slice = os.path.join(output_dir_left, f"Slice{slice_idx:03}/")
             output_dir_right_slice = os.path.join(output_dir_right, f"Slice{slice_idx:03}/")
     
@@ -180,10 +149,6 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
                 (right_bottom_left_lesion, f"right_lesion_3"),
                 (right_bottom_right_lesion, f"right_lesion_4"),
             ]
-            
-            # Ajustar os pedaços da máscara para remover pedaços únicos com pixels `1`
-            if (count_label1_anterior!=count_label1_posterior):
-                subimages = adjust_unique_lesion_pieces_with_neighbors(subimages, slice_idx, lesion_data.shape[2], lesion_data)
             
             # Salvar cada subimagem como um arquivo NIfTI separado
             for subimage, position in subimages:

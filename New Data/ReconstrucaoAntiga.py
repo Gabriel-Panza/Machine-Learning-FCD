@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from tqdm import tqdm
 
-def calculate_label(image, threshold=0.05):
+def calculate_label(image, threshold=0.003125):
     """
     Determina o label da subimagem com base no percentual de fundo não-preto.
     :param subimage: Array da subimagem.
@@ -70,11 +70,10 @@ def load_data_with_pairs(folder):
             for img_path_left, mask_path_left in zip(os.listdir(img_path), os.listdir(mask_path)):
                 image_data_left = nib.load(os.path.join(img_path, img_path_left)).get_fdata()
                 mask_data_left = nib.load(os.path.join(mask_path, mask_path_left)).get_fdata()
-                if (len(image_data_left) > 0 and image_data_left is not []) or (len(mask_data_left) > 0 and mask_data_left is not []):
-                    images_left[patient_id].append(image_data_left)
-                    mask_left[patient_id].append(mask_data_left)
+                images_left[patient_id].append(image_data_left)
+                mask_left[patient_id].append(mask_data_left)
 
-                    labels_left[patient_id].append(calculate_label(mask_data_left))
+                labels_left[patient_id].append(calculate_label(mask_data_left))
 
         # Carrega as imagens e máscaras do lado direito
         for patch_id, mask_id in zip(os.listdir(path_right), os.listdir(lesion_path_right)):
@@ -83,11 +82,10 @@ def load_data_with_pairs(folder):
             for img_path_right, mask_path_right in zip(os.listdir(img_path), os.listdir(mask_path)):
                 image_data_right = nib.load(os.path.join(img_path, img_path_right)).get_fdata()
                 mask_data_right = nib.load(os.path.join(mask_path, mask_path_right)).get_fdata()
-                if (len(image_data_right) > 0 and image_data_right is not []) or (len(mask_data_right) > 0 and mask_data_right is not []):
-                    images_right[patient_id].append(image_data_right)
-                    mask_right[patient_id].append(mask_data_right)
-                    
-                    labels_right[patient_id].append(calculate_label(mask_data_right))
+                images_right[patient_id].append(image_data_right)
+                mask_right[patient_id].append(mask_data_right)
+                
+                labels_right[patient_id].append(calculate_label(mask_data_right))
         patient_ids.append(patient_id)
 
     # Estruturas para armazenar os pares de labels
@@ -107,39 +105,23 @@ def load_data_with_pairs(folder):
     return images_left, images_right, labels_pair, mask_left, mask_right, patient_ids
 
 def build_image(img, mask):
-    # Tamanho dos patches
-    patch_size = 96
-
-    # Inicializar a matriz para a imagem e a máscara reconstruídas
-    imagem_reconstruida = np.zeros((4 * patch_size, 2 * patch_size//2), dtype=np.uint8)
-    mascara_reconstruida = np.zeros((4 * patch_size, 2 * patch_size//2), dtype=np.uint8)
-
-    # Ordem correta para reconstrução
-    correct_order = [
-        0, 1, 8, 9,    # Linha 1
-        2, 3, 10, 11,  # Linha 2
-        4, 5, 12, 13,  # Linha 3
-        6, 7, 14, 15   # Linha 4
-    ]
-
-    # Loop para reconstruir as linhas e colunas
-    for i in range(4):  # Linha
-        for j in range(2):  # Coluna
-            idx = correct_order[i * 2 + j]
-            x_start = i * patch_size 
-            y_start = j * patch_size//2
-            
-            imagem_reconstruida[x_start:x_start + patch_size, y_start:y_start + patch_size//2] = img[idx]
-            mascara_reconstruida[x_start:x_start + patch_size, y_start:y_start + patch_size//2] = mask[idx]
-            
-    return imagem_reconstruida, mascara_reconstruida
+    # Juntar lado esquerdo (4 pedaços)
+    left_side = np.vstack([img[0], img[1], img[2], img[3]])
+    # Juntar lado direito (4 pedaços)
+    right_side = np.vstack([img[4], img[5], img[6], img[7]])
+    
+    # Juntar lado esquerdo (4 pedaços)
+    left_side_mask = np.vstack([mask[0], mask[1], mask[2], mask[3]])
+    # Juntar lado direito (4 pedaços)
+    right_side_mask = np.vstack([mask[4], mask[5], mask[6], mask[7]])
+    
+    return np.hstack([left_side, right_side]) , np.hstack([left_side_mask, right_side_mask]) 
 
 def plot_patient_slices(pdf_filename, patients, images_left, images_right, mask_left, mask_right):
     with PdfPages(pdf_filename) as pdf:
             for patient in patients:
                 cont = 0            
                 
-                classificacao = []
                 vetor_left_img = []
                 vetor_left_mask = []
                 vetor_right_img = []
@@ -152,8 +134,8 @@ def plot_patient_slices(pdf_filename, patients, images_left, images_right, mask_
                 for img_left, img_right, msk_left, msk_right in zip(images_left[patient], images_right[patient], mask_left[patient], mask_right[patient]):
                     tmp_vetor_left_img.append(img_left)
                     tmp_vetor_left_mask.append(msk_left)
-                    tmp_vetor_right_img.append(np.fliplr(img_right))
-                    tmp_vetor_right_mask.append(np.fliplr(msk_right))
+                    tmp_vetor_right_img.append(img_right)
+                    tmp_vetor_right_mask.append(msk_right)
                 
                     cont+=1
                     if cont%8 ==0:
@@ -171,12 +153,12 @@ def plot_patient_slices(pdf_filename, patients, images_left, images_right, mask_
                     imagem_reconstruida, mascara_reconstruida = build_image(vetor_left_img[i]+vetor_right_img[i], vetor_left_mask[i]+vetor_right_mask[i])
                     if (np.any(mascara_reconstruida) == 1):
                         # Configurar a figura
-                        fig, axs = plt.subplots(2, 1, figsize=(4, 4))
+                        fig, axs = plt.subplots(2, 1, figsize=(2, 2))
 
-                        axs[0].imshow(np.flipud(imagem_reconstruida), cmap='gray')
+                        axs[0].imshow(imagem_reconstruida, cmap='gray')
                         axs[0].set_title(f'{patient}')
                         axs[0].axis('off')
-                        axs[1].imshow(np.flipud(mascara_reconstruida), cmap='gray')
+                        axs[1].imshow(mascara_reconstruida, cmap='gray')
                         axs[1].axis('off')
                         
                         # Adicionar ao PDF
@@ -186,7 +168,7 @@ def plot_patient_slices(pdf_filename, patients, images_left, images_right, mask_
             print(f"As imagens foram salvas no arquivo PDF {pdf_filename} com sucesso.")
 
 folder = "Contralateral"
-pdf_filename="Pacientes_Reconstruidos.pdf"
+pdf_filename="Pdf/Pacientes_Reconstruidos.pdf"
 images_left_by_patient, images_right_by_patient, labels_pair_by_patient, mask_left_by_patient, mask_right_by_patient, patient_ids = load_data_with_pairs(folder)
 plot_patient_slices(
     pdf_filename=pdf_filename,
