@@ -108,14 +108,14 @@ def build_image(img, mask):
     # Juntar lado esquerdo (4 pedaços)
     left_side = np.vstack([img[0], img[1], img[2], img[3]])
     # Juntar lado direito (4 pedaços)
-    right_side = np.vstack([img[4], img[5], img[6], img[7]])
+    right_side = np.vstack([img[4], img[5], img[6], img[7]])[:, ::-1]
     
     # Juntar lado esquerdo (4 pedaços)
     left_side_mask = np.vstack([mask[0], mask[1], mask[2], mask[3]])
     # Juntar lado direito (4 pedaços)
-    right_side_mask = np.vstack([mask[4], mask[5], mask[6], mask[7]])
+    right_side_mask = np.vstack([mask[4], mask[5], mask[6], mask[7]])[:, ::-1]
     
-    return np.hstack([left_side, right_side]) , np.hstack([left_side_mask, right_side_mask]) 
+    return np.hstack([left_side, right_side]) , np.hstack([left_side_mask, right_side_mask])
 
 def plot_patient_slices(pdf_filename, patients, images_left, images_right, mask_left, mask_right):
     with PdfPages(pdf_filename) as pdf:

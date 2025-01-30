@@ -28,28 +28,25 @@ def divide_8_pieces(rotated_slice):
     midpoint = rotated_slice.shape[1] // 2
     left_half = rotated_slice[:,8:midpoint]
     right_half = rotated_slice[:, midpoint:2*midpoint - 8]
-
-    # Inverter horizontalmente o lado direito
-    right_half_flipped = np.fliplr(right_half)
     
     # Dividir as metades esquerda e direita horizontalmente em duas partes
     horizontal_mid_left = (left_half.shape[0]) // 2
-    horizontal_mid_right = (right_half_flipped.shape[0]) // 2
+    horizontal_mid_right = (right_half.shape[0]) // 2
     
     left_top = left_half[26:horizontal_mid_left, :]
     left_bottom = left_half[horizontal_mid_left:horizontal_mid_left*2-26, :]
-    right_top = right_half_flipped[26:horizontal_mid_right, :]
-    right_bottom = right_half_flipped[horizontal_mid_right:horizontal_mid_right*2-26, :]
+    right_top = right_half[26:horizontal_mid_right, :]
+    right_bottom = right_half[horizontal_mid_right:horizontal_mid_right*2-26, :]
 
     # Dividir cada quadrante em 2 subquadrantes (totalizando 8 divisões)
-    left_top_left = left_top[:(left_top.shape[1] // 2), :]
-    left_top_right = left_top[(left_top.shape[1] // 2):, :]
-    left_bottom_left = left_bottom[:(left_bottom.shape[1] // 2), :]
-    left_bottom_right = left_bottom[(left_bottom.shape[1] // 2):, :]
-    right_top_left = right_top[:(right_top.shape[1] // 2), :]
-    right_top_right = right_top[(right_top.shape[1] // 2):, :]
-    right_bottom_left = right_bottom[:(right_bottom.shape[1] // 2), :]
-    right_bottom_right = right_bottom[(right_bottom.shape[1] // 2):, :]
+    left_top_left = left_top[:(left_top.shape[0] // 2), :]
+    left_top_right = left_top[(left_top.shape[0] // 2):, :]
+    left_bottom_left = left_bottom[:(left_bottom.shape[0] // 2), :]
+    left_bottom_right = left_bottom[(left_bottom.shape[0] // 2):, :]
+    right_top_left = right_top[:(right_top.shape[0] // 2), :]
+    right_top_right = right_top[(right_top.shape[0] // 2):, :]
+    right_bottom_left = right_bottom[:(right_bottom.shape[0] // 2), :]
+    right_bottom_right = right_bottom[(right_bottom.shape[0] // 2):, :]
     
     return left_top_left, left_top_right, left_bottom_left, left_bottom_right, right_top_left, right_top_right, right_bottom_left, right_bottom_right
 
@@ -93,7 +90,14 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
         # Rotacionar a fatia em -90 graus
         rotated_slice = np.rot90(slice_data, k=1)
 
-        if np.count_nonzero(slice_data) > 0:  # Só executa se a fatia tiver pixels não pretos
+        # Total de pixels na subimagem
+        total_pixels = rotated_slice.size
+        # Número de pixels não-preto
+        non_zero_pixels = np.count_nonzero(rotated_slice)
+        # Proporção de pixels não-preto
+        non_black_ratio = non_zero_pixels / total_pixels if total_pixels > 0 else 0
+        
+        if non_black_ratio >= 0.04:
             output_dir_left_slice = os.path.join(output_dir_left, f"Slice{slice_idx:03}/")
             output_dir_right_slice = os.path.join(output_dir_right, f"Slice{slice_idx:03}/")
     
@@ -153,7 +157,7 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
             # Salvar cada subimagem como um arquivo NIfTI separado
             for subimage, position in subimages:
                 # Definir o diretório de saída com base na posição
-                if position.startswith("left"):
+                if position.split("_")[0] == "left":
                     output_path_lesion = os.path.join(output_dir_lesion_left_slice, f"{position}.nii.gz")
                 else:
                     output_path_lesion = os.path.join(output_dir_lesion_right_slice, f"{position}.nii.gz")
@@ -162,7 +166,7 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
                 subimage_nii = nib.Nifti1Image(subimage, affine=np.eye(4))
                 
                 # Salvar o arquivo NIfTI
-                if (subimage.size>0 and subimage is not None):
+                if (subimage is not None and subimage.size>0):
                     nib.save(subimage_nii, output_path_lesion)
 
             left_top_left, left_top_right, left_bottom_left, left_bottom_right, right_top_left, right_top_right, right_bottom_left, right_bottom_right = divide_8_pieces(rotated_slice)
@@ -184,7 +188,7 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
             # Salvar cada subimagem como um arquivo NIfTI separado
             for subimage, position in subimages:            
                 # Definir o diretório de saída com base na posição
-                if position.startswith("left"):
+                if position.split("_")[0] == "left":
                     output_path = os.path.join(output_dir_left_slice, f"{position}.nii.gz")
                 else:
                     output_path = os.path.join(output_dir_right_slice, f"{position}.nii.gz")
@@ -193,7 +197,7 @@ for img, mask in zip(os.listdir(imagens), os.listdir(mascara)):
                 subimage_nii = nib.Nifti1Image(subimage, affine=np.eye(4))
                 
                 # Salvar o arquivo NIfTI
-                if (subimage.size>0 and subimage is not None):
+                if (subimage is not None and subimage.size>0):
                     nib.save(subimage_nii, output_path)
             
             
