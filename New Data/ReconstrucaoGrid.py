@@ -121,36 +121,42 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
 
     with PdfPages(pdf_filename) as pdf:
         for patient_id in patients:
+
+            grid_vec = []
+            imgs_vec = []
+            mask_vec = []
+
             patient_start_time = time()
-            print(f"paciente: {patient_id}\n\n")
+            print(f"paciente: {patient_id}")
 
             fatia_path = f"{fatias_dir}/{patient_id}" #caminho da pasta de fatias para um paciente
-            fatias_names = os.listdir(fatia_path)
+            #fatias_names = os.listdir(fatia_path)
 
             mascara_path = f"{masks_dir}/{patient_id}" #caminho da pasta de mascaras para um paciente
 
             grid_path =  f"{grid_dir}/{patient_id}" #caminho da pasta de grids para um paciente
             grids_names = os.listdir(grid_path)
 
-            for idx in range(len(fatias_names)):
-                fatias_names[idx] = fatias_names[idx].split(".")[0] #tira o .nii.gz
-
+            #for idx in range(len(fatias_names)):
+            #    fatias_names[idx] = fatias_names[idx].split(".")[0] #tira o .nii.gz
+                
             for idx in range(len(grids_names)):
                 grids_names[idx] = grids_names[idx].split(".")[0] #tira o .txt
 
-            for slice_img in fatias_names:
-                if slice_img not in grids_names: # verifica se existe grid para esta imagem
-                    continue
-                else:
-                    # caminho dos dados para esta fatia
-                    img_data_path = f"{fatia_path}/{slice_img}.nii.gz"
-                    mask_data_path = f"{mascara_path}/{slice_img}.nii.gz"
-                    grid_data_path = f"{grid_path}/{slice_img}.txt"
+            for item in grids_names:
+                    img_data_path = f"{fatia_path}/{item}.nii.gz"
+                    mask_data_path = f"{mascara_path}/{item}.nii.gz"
+                    grid_data_path = f"{grid_path}/{item}.txt"
 
-                    # carrega dados para esta fatia
                     coordinates = load_one_coordinate(grid_data_path)
                     img_data = nib.load(img_data_path).get_fdata()
                     mask_data = nib.load(mask_data_path).get_fdata()
+
+                    grid_vec.append(coordinates)
+                    imgs_vec.append(img_data)
+                    mask_vec.append(mask_data)
+
+            for img_data, mask_data, coordinates in zip(imgs_vec, mask_vec, grid_vec):
 
                     plt.figure(figsize=(8, 8))
 
@@ -190,7 +196,7 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
             # Calcula o tempo gasto por paciente
             patient_end_time = time()
             patient_duration = patient_end_time - patient_start_time
-            print(f"Tempo para o paciente {patient_id}: {patient_duration:.2f} segundos\n")
+            print(f"Tempo para o paciente {patient_id}: {patient_duration:.2f} segundos\n\n")
 
     end_time = time()
     total_duration = end_time - start_time
