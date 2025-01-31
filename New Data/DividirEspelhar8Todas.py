@@ -3,7 +3,7 @@ import nrrd
 import numpy as np
 import os
 
-def calculate_label(subimage, threshold=0.003125):
+def calculate_label(subimage, threshold=0.000625):
     """
     Determina o label da subimagem com base no percentual de fundo não-preto.
     :param subimage: Array da subimagem.

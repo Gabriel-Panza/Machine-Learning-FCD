@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from tqdm import tqdm
 
-def calculate_label(image, threshold=0.003125):
+def calculate_label(image, threshold=0.01):
     """
     Determina o label da subimagem com base no percentual de fundo não-preto.
     :param subimage: Array da subimagem.
@@ -25,156 +25,196 @@ def calculate_label(image, threshold=0.003125):
     else:
         return 0
 
-# Função que carrega os dados com pares de imagens
-def load_data_with_pairs(folder):
-    if not os.path.exists(folder):
-        print(f"A pasta {folder} não existe.")
-        return {}, {}, {}, {}, {}
-    
-    images_left = {}
-    images_right = {}
-    mask_left = {}
-    mask_right = {}
-    labels_left = {}
-    labels_right = {}
-    patient_ids = []
+def load_patient_data(folder, patient_id):
+    """
+    Carrega os dados de um único paciente (imagens, máscaras e labels) de um diretório.
 
-    # Itera sobre os pacientes no diretório
-    for patient_id in tqdm(os.listdir(folder), desc="Carregamento de arquivos NIfTI..."):
-        patient_path = os.path.join(folder, patient_id)
+    Args:
+        folder (str): Caminho da pasta contendo os dados dos pacientes.
+        patient_id (str): ID do paciente a ser carregado.
 
-        areas_image = ["left", "right"]
-        areas_mask = ["lesion_left", "lesion_right"]
-        path_left = os.path.join(patient_path, areas_image[0])
-        path_right = os.path.join(patient_path, areas_image[1])
-        lesion_path_left = os.path.join(patient_path, areas_mask[0])
-        lesion_path_right = os.path.join(patient_path, areas_mask[1])
+    Returns:
+        dict: Dados do paciente, incluindo imagens, máscaras e labels para os lados esquerdo e direito.
+              Retorna None se o paciente não for encontrado.
+    """
+    patient_path = os.path.join(folder, patient_id)
+    if not os.path.exists(patient_path):
+        print(f"Paciente {patient_id} não encontrado na pasta {folder}.")
+        return None
 
-        if patient_id not in images_left:
-            images_left[patient_id] = []
-        if patient_id not in images_right:
-            images_right[patient_id] = []
-        if patient_id not in mask_left:
-            mask_left[patient_id] = []
-        if patient_id not in mask_right:
-            mask_right[patient_id] = []
-        if patient_id not in labels_left:
-            labels_left[patient_id] = []
-        if patient_id not in labels_right:
-            labels_right[patient_id] = []
-                    
-        # Carrega as imagens e máscaras do lado esquerdo
-        for patch_id, mask_id in zip(os.listdir(path_left), os.listdir(lesion_path_left)):
-            img_path= os.path.join(path_left, patch_id)
-            mask_path = os.path.join(lesion_path_left, mask_id)
-            for img_path_left, mask_path_left in zip(os.listdir(img_path), os.listdir(mask_path)):
-                image_data_left = nib.load(os.path.join(img_path, img_path_left)).get_fdata()
-                mask_data_left = nib.load(os.path.join(mask_path, mask_path_left)).get_fdata()
-                images_left[patient_id].append(image_data_left)
-                mask_left[patient_id].append(mask_data_left)
+    # Inicializa estruturas para armazenar os dados do paciente
+    patient_data = {
+        "images_left": [],
+        "images_right": [],
+        "mask_left": [],
+        "mask_right": [],
+        "labels_left": [],
+        "labels_right": [],
+    }
 
-                labels_left[patient_id].append(calculate_label(mask_data_left))
+    areas_image = ["left", "right"]
+    areas_mask = ["lesion_left", "lesion_right"]
+    path_left = os.path.join(patient_path, areas_image[0])
+    path_right = os.path.join(patient_path, areas_image[1])
+    lesion_path_left = os.path.join(patient_path, areas_mask[0])
+    lesion_path_right = os.path.join(patient_path, areas_mask[1])
 
-        # Carrega as imagens e máscaras do lado direito
-        for patch_id, mask_id in zip(os.listdir(path_right), os.listdir(lesion_path_right)):
-            img_path = os.path.join(path_right, patch_id)
-            mask_path = os.path.join(lesion_path_right, mask_id)
-            for img_path_right, mask_path_right in zip(os.listdir(img_path), os.listdir(mask_path)):
-                image_data_right = nib.load(os.path.join(img_path, img_path_right)).get_fdata()
-                mask_data_right = nib.load(os.path.join(mask_path, mask_path_right)).get_fdata()
-                images_right[patient_id].append(image_data_right)
-                mask_right[patient_id].append(mask_data_right)
-                
-                labels_right[patient_id].append(calculate_label(mask_data_right))
-        patient_ids.append(patient_id)
+    # Verifica se os diretórios existem
+    if not os.path.exists(path_left) or not os.path.exists(path_right) or \
+       not os.path.exists(lesion_path_left) or not os.path.exists(lesion_path_right):
+        print(f"Estrutura de diretórios inválida para o paciente {patient_id}.")
+        return None
 
-    # Estruturas para armazenar os pares de labels
-    labels_pair = {}
-    for patient_id,_ in zip(labels_left.keys(), labels_right.keys()):
-        labels_pair[patient_id] = []
-        for label_left, label_right in zip(labels_left[patient_id], labels_right[patient_id]): 
-            if label_left == 0 and label_right == 0:
-                labels_pair[patient_id].append(0)
-            else:
-                labels_pair[patient_id].append(1)
+    # Carrega as imagens e máscaras do lado esquerdo e direito
+    for patch_id_left, mask_id_left, patch_id_right, mask_id_right in zip(
+        os.listdir(path_left), os.listdir(lesion_path_left),
+        os.listdir(path_right), os.listdir(lesion_path_right)
+    ):
+        img_path_left = os.path.join(path_left, patch_id_left)
+        mask_path_left = os.path.join(lesion_path_left, mask_id_left)
+        img_path_right = os.path.join(path_right, patch_id_right)
+        mask_path_right = os.path.join(lesion_path_right, mask_id_right)
 
-    print(f"Total de pacientes: {len(patient_ids)}")
-    for patient_id, labels in labels_pair.items():
-        print(f"Paciente {patient_id}: Total de pares de recortes: {len(labels)}")
+        for img_left, msk_left, img_right, msk_right in zip(
+            os.listdir(img_path_left), os.listdir(mask_path_left),
+            os.listdir(img_path_right), os.listdir(mask_path_right)
+        ):
+            # Carrega os dados do lado esquerdo
+            data_left = nib.load(os.path.join(img_path_left, img_left)).get_fdata()
+            data_msk_left = nib.load(os.path.join(mask_path_left, msk_left)).get_fdata()
+            if len(data_left) > 0 or len(data_msk_left) > 0:
+                patient_data["images_left"].append(data_left)
+                patient_data["mask_left"].append(data_msk_left)
+                patient_data["labels_left"].append(calculate_label(data_msk_left))
 
-    return images_left, images_right, labels_pair, mask_left, mask_right, patient_ids
+            # Carrega os dados do lado direito
+            data_right = nib.load(os.path.join(img_path_right, img_right)).get_fdata()
+            data_msk_right = nib.load(os.path.join(mask_path_right, msk_right)).get_fdata()
+            if len(data_right) > 0 or len(data_msk_right) > 0:
+                patient_data["images_right"].append(data_right)
+                patient_data["mask_right"].append(data_msk_right)
+                patient_data["labels_right"].append(calculate_label(data_msk_right))
+
+    # Gera os pares de labels
+    labels_pair = []
+    for label_left, label_right in zip(patient_data["labels_left"], patient_data["labels_right"]):
+        if label_left == 0 and label_right == 0:
+            labels_pair.append(0)
+        else:
+            labels_pair.append(1)
+    patient_data["labels_pair"] = labels_pair
+
+    print(f"Paciente {patient_id} carregado com sucesso.")
+    print(f"Total de recortes: {len(labels_pair)}")
+    return patient_data
 
 def build_image(img, mask):
     # Juntar lado esquerdo (4 pedaços)
-    left_side = np.vstack([img[0], img[1], img[2], img[3]])
+    left_side = np.vstack([highlight_lesions(img[0], mask[0]), highlight_lesions(img[1], mask[1]), highlight_lesions(img[2], mask[2]), highlight_lesions(img[3], mask[3])])
     # Juntar lado direito (4 pedaços)
-    right_side = np.vstack([img[4], img[5], img[6], img[7]])[:, ::-1]
+    right_side = np.vstack([highlight_lesions(img[4], mask[4]), highlight_lesions(img[5], mask[5]), highlight_lesions(img[6], mask[6]), highlight_lesions(img[7], mask[7])])[:, ::-1]
     
     # Juntar lado esquerdo (4 pedaços)
-    left_side_mask = np.vstack([mask[0], mask[1], mask[2], mask[3]])
+    left_side_mask = np.vstack([highlight_lesions(mask[0], mask[0]), highlight_lesions(mask[1], mask[1]), highlight_lesions(mask[2], mask[2]), highlight_lesions(mask[3], mask[3])])
     # Juntar lado direito (4 pedaços)
-    right_side_mask = np.vstack([mask[4], mask[5], mask[6], mask[7]])[:, ::-1]
+    right_side_mask = np.vstack([highlight_lesions(mask[4], mask[4]), highlight_lesions(mask[5], mask[5]), highlight_lesions(mask[6], mask[6]), highlight_lesions(mask[7], mask[7])])[:, ::-1]
     
     return np.hstack([left_side, right_side]) , np.hstack([left_side_mask, right_side_mask])
 
-def plot_patient_slices(pdf_filename, patients, images_left, images_right, mask_left, mask_right):
+def highlight_lesions(image, mask):
+    """
+    Destaca as áreas de lesão na imagem, desenhando contornos azuis ao redor das máscaras.
+    Para áreas sem lesão, desenha contornos vermelhos.
+    """
+    highlighted_image = np.copy(image)
+    
+    # Encontra os contornos das máscaras
+    from skimage import measure
+    contours = measure.find_contours(mask, 0.5)
+    
+    # Desenha os contornos na imagem
+    if calculate_label(mask):  # Verifica se é lesão
+        color = 'blue'  # Azul para lesões
+    else:
+        color = 'red'  # Vermelho para áreas sem lesão
+    
+    for contour in contours:
+        # Desenha o contorno na imagem
+        for i in range(len(contour) - 1):
+            y1, x1 = contour[i]
+            y2, x2 = contour[i + 1]
+            plt.plot([x1, x2], [y1, y2], color=color, linewidth=2)
+    
+    return highlighted_image
+
+def plot_patient_slices(pdf_filename, folder):
+    """
+    Gera um PDF com as fatias reconstruídas de cada paciente, destacando as lesões.
+    """
     with PdfPages(pdf_filename) as pdf:
-            for patient in patients:
-                cont = 0            
-                
-                vetor_left_img = []
-                vetor_left_mask = []
-                vetor_right_img = []
-                vetor_right_mask = []
-                tmp_vetor_left_img = []
-                tmp_vetor_left_mask = []
-                tmp_vetor_right_img = []
-                tmp_vetor_right_mask = []
-                
-                for img_left, img_right, msk_left, msk_right in zip(images_left[patient], images_right[patient], mask_left[patient], mask_right[patient]):
-                    tmp_vetor_left_img.append(img_left)
-                    tmp_vetor_left_mask.append(msk_left)
-                    tmp_vetor_right_img.append(img_right)
-                    tmp_vetor_right_mask.append(msk_right)
-                
-                    cont+=1
-                    if cont%8 ==0:
-                        vetor_left_img.append(tmp_vetor_left_img)
-                        vetor_left_mask.append(tmp_vetor_left_mask)
-                        vetor_right_img.append(tmp_vetor_right_img)
-                        vetor_right_mask.append(tmp_vetor_right_mask)
-                        tmp_vetor_left_img = []
-                        tmp_vetor_left_mask = []
-                        tmp_vetor_right_img = []
-                        tmp_vetor_right_mask = []
-                
-                cont = 0
-                for i in range(len(vetor_left_img)):
-                    imagem_reconstruida, mascara_reconstruida = build_image(vetor_left_img[i]+vetor_right_img[i], vetor_left_mask[i]+vetor_right_mask[i])
-                    if (np.any(mascara_reconstruida) == 1):
-                        # Configurar a figura
-                        fig, axs = plt.subplots(2, 1, figsize=(2, 2))
+        for patient_id in tqdm(os.listdir(folder), desc="Processando pacientes..."):
+            patient_data = load_patient_data(folder, patient_id)
+            if patient_data is None:
+                continue
 
-                        axs[0].imshow(imagem_reconstruida, cmap='gray')
-                        axs[0].set_title(f'{patient}')
-                        axs[0].axis('off')
-                        axs[1].imshow(mascara_reconstruida, cmap='gray')
-                        axs[1].axis('off')
-                        
-                        # Adicionar ao PDF
-                        pdf.savefig(fig)
-                        plt.close(fig)
-                
-            print(f"As imagens foram salvas no arquivo PDF {pdf_filename} com sucesso.")
+            images_left = patient_data["images_left"]
+            images_right = patient_data["images_right"]
+            mask_left = patient_data["mask_left"]
+            mask_right = patient_data["mask_right"]
 
+            cont = 0            
+            vetor_left_img = []
+            vetor_left_mask = []
+            vetor_right_img = []
+            vetor_right_mask = []
+            tmp_vetor_left_img = []
+            tmp_vetor_left_mask = []
+            tmp_vetor_right_img = []
+            tmp_vetor_right_mask = []
+            
+            for img_left, img_right, msk_left, msk_right in zip(images_left, images_right, mask_left, mask_right):
+                tmp_vetor_left_img.append(img_left)
+                tmp_vetor_left_mask.append(msk_left)
+                tmp_vetor_right_img.append(img_right)
+                tmp_vetor_right_mask.append(msk_right)
+            
+                cont += 1
+                if cont % 8 == 0:
+                    vetor_left_img.append(tmp_vetor_left_img)
+                    vetor_left_mask.append(tmp_vetor_left_mask)
+                    vetor_right_img.append(tmp_vetor_right_img)
+                    vetor_right_mask.append(tmp_vetor_right_mask)
+                    tmp_vetor_left_img = []
+                    tmp_vetor_left_mask = []
+                    tmp_vetor_right_img = []
+                    tmp_vetor_right_mask = []
+            
+            cont = 0
+            for i in range(len(vetor_left_img)):
+                imagem_reconstruida, mascara_reconstruida = build_image(vetor_left_img[i] + vetor_right_img[i], vetor_left_mask[i] + vetor_right_mask[i])
+                
+                # Configurar a figura
+                fig, axs = plt.subplots(2, 1, figsize=(8, 8))
+
+                axs[0].imshow(imagem_reconstruida, cmap='gray')
+                axs[0].set_title(f'{patient_id} - Imagem Reconstruída')
+                axs[0].axis('off')
+
+                axs[1].imshow(mascara_reconstruida, cmap='gray')
+                axs[1].set_title(f'{patient_id} - Lesões Destacadas')
+                axs[1].axis('off')
+                
+                imagem_reconstruida, mascara_reconstruida = build_image(vetor_left_img[i] + vetor_right_img[i], vetor_left_mask[i] + vetor_right_mask[i])
+                
+                # Adicionar ao PDF
+                pdf.savefig(fig)
+                plt.close(fig)
+        
+    print(f"As imagens foram salvas no arquivo PDF {pdf_filename} com sucesso.")
+
+# Caminho da pasta contendo os dados dos pacientes
 folder = "Contralateral"
-pdf_filename="Pdf/Pacientes_Reconstruidos.pdf"
-images_left_by_patient, images_right_by_patient, labels_pair_by_patient, mask_left_by_patient, mask_right_by_patient, patient_ids = load_data_with_pairs(folder)
-plot_patient_slices(
-    pdf_filename=pdf_filename,
-    patients=patient_ids,
-    images_left=images_left_by_patient,
-    images_right=images_right_by_patient,
-    mask_left=mask_left_by_patient,
-    mask_right=mask_right_by_patient,
-)
+pdf_filename = "Pdf/Pacientes_Reconstruidos.pdf"
+
+# Gera o PDF com as fatias reconstruídas
+plot_patient_slices(pdf_filename, folder)
