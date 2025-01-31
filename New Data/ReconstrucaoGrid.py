@@ -40,7 +40,6 @@ def load_full_image_and_mask(image_path, mask_path):
     patient_ids = []
     
     for patient_id, mask_id in tqdm(zip(os.listdir(image_path), os.listdir(mask_path)), desc="Carregamento de arquivos NIfTI..."):
-        
         patient_path = os.path.join(image_path, patient_id)
         mask_patient_path = os.path.join(mask_path, mask_id)
         patient_ids.append(patient_id)
@@ -50,7 +49,6 @@ def load_full_image_and_mask(image_path, mask_path):
         for patch_id, mask_patch_id in zip(os.listdir(patient_path), os.listdir(mask_patient_path)):
             img = nib.load(os.path.join(patient_path, patch_id)).get_fdata()
             mask = nib.load(os.path.join(mask_patient_path, mask_patch_id)).get_fdata()
-            #print(f"patch: {patch_id} e mask: {mask_patch_id}") corrigir ordem 79, 8, 80
             images[patient_id].append(img)
             masks[patient_id].append(mask)
 
@@ -130,7 +128,7 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
 
                     plt.plot([x1_mirror, x2_mirror, x2_mirror, x1_mirror, x1_mirror], 
                              [y1, y1, y2, y2, y1], 
-                             color='yellow', linewidth=3)
+                             color='blue', linewidth=3)
 
                 # Mostrar a máscara correspondente
                 plt.subplot(1, 2, 2)
@@ -161,7 +159,7 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
 
                     plt.plot([x1_mirror, x2_mirror, x2_mirror, x1_mirror, x1_mirror], 
                              [y1, y1, y2, y2, y1], 
-                             color='yellow', linewidth=3)
+                             color='blue', linewidth=3)
 
                 pdf.savefig()
                 plt.close()
