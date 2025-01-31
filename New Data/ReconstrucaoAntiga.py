@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from tqdm import tqdm
+from skimage import measure
 
 def calculate_label(image, threshold=0.01):
     """
@@ -108,19 +109,6 @@ def load_patient_data(folder, patient_id):
     print(f"Total de recortes: {len(labels_pair)}")
     return patient_data
 
-def build_image(img, mask):
-    # Juntar lado esquerdo (4 pedaços)
-    left_side = np.vstack([highlight_lesions(img[0], mask[0]), highlight_lesions(img[1], mask[1]), highlight_lesions(img[2], mask[2]), highlight_lesions(img[3], mask[3])])
-    # Juntar lado direito (4 pedaços)
-    right_side = np.vstack([highlight_lesions(img[4], mask[4]), highlight_lesions(img[5], mask[5]), highlight_lesions(img[6], mask[6]), highlight_lesions(img[7], mask[7])])[:, ::-1]
-    
-    # Juntar lado esquerdo (4 pedaços)
-    left_side_mask = np.vstack([highlight_lesions(mask[0], mask[0]), highlight_lesions(mask[1], mask[1]), highlight_lesions(mask[2], mask[2]), highlight_lesions(mask[3], mask[3])])
-    # Juntar lado direito (4 pedaços)
-    right_side_mask = np.vstack([highlight_lesions(mask[4], mask[4]), highlight_lesions(mask[5], mask[5]), highlight_lesions(mask[6], mask[6]), highlight_lesions(mask[7], mask[7])])[:, ::-1]
-    
-    return np.hstack([left_side, right_side]) , np.hstack([left_side_mask, right_side_mask])
-
 def highlight_lesions(image, mask):
     """
     Destaca as áreas de lesão na imagem, desenhando contornos azuis ao redor das máscaras.
@@ -129,23 +117,40 @@ def highlight_lesions(image, mask):
     highlighted_image = np.copy(image)
     
     # Encontra os contornos das máscaras
-    from skimage import measure
     contours = measure.find_contours(mask, 0.5)
     
-    # Desenha os contornos na imagem
+    # Define a cor com base na presença de lesão
     if calculate_label(mask):  # Verifica se é lesão
-        color = 'blue'  # Azul para lesões
+        color = np.array([0, 0, 255])  # Azul para lesões (em RGB)
     else:
-        color = 'red'  # Vermelho para áreas sem lesão
+        color = np.array([255, 0, 0])  # Vermelho para áreas sem lesão (em RGB)
     
+    # Desenha os contornos na imagem
     for contour in contours:
-        # Desenha o contorno na imagem
         for i in range(len(contour) - 1):
-            y1, x1 = contour[i]
-            y2, x2 = contour[i + 1]
-            plt.plot([x1, x2], [y1, y2], color=color, linewidth=2)
+            y1, x1 = map(int, contour[i])
+            y2, x2 = map(int, contour[i + 1])
+            # Desenha uma linha entre os pontos do contorno
+            highlighted_image[y1:y2, x1:x2] = color
     
     return highlighted_image
+
+def build_image(img, mask):
+    # Juntar lado esquerdo (4 pedaços)
+    left_side = np.vstack([img[0], img[1], img[2], img[3]])
+    left_side_grid = np.vstack([highlight_lesions(img[0], mask[0]), highlight_lesions(img[1], mask[1]), highlight_lesions(img[2], mask[2]), highlight_lesions(img[3], mask[3])])
+    # Juntar lado direito (4 pedaços)
+    right_side = np.vstack([img[4], img[5], img[6], img[7]])
+    right_side_grid = np.vstack([highlight_lesions(img[4], mask[4]), highlight_lesions(img[5], mask[5]), highlight_lesions(img[6], mask[6]), highlight_lesions(img[7], mask[7])])[:, ::-1]
+    
+    # Juntar lado esquerdo (4 pedaços)
+    left_side_mask_grid = np.vstack([highlight_lesions(mask[0], mask[0]), highlight_lesions(mask[1], mask[1]), highlight_lesions(mask[2], mask[2]), highlight_lesions(mask[3], mask[3])])
+    left_side_mask = np.vstack([mask[0], mask[1], mask[2], mask[3]])
+    # Juntar lado direito (4 pedaços)
+    right_side_mask_grid = np.vstack([highlight_lesions(mask[4], mask[4]), highlight_lesions(mask[5], mask[5]), highlight_lesions(mask[6], mask[6]), highlight_lesions(mask[7], mask[7])])[:, ::-1]
+    right_side_mask = np.vstack([mask[4], mask[5], mask[6], mask[7]])
+    
+    return np.hstack([left_side, right_side]) , np.hstack([left_side_mask, right_side_mask]), np.hstack([left_side_grid, right_side_grid]) , np.hstack([left_side_mask_grid, right_side_mask_grid])
 
 def plot_patient_slices(pdf_filename, folder):
     """
@@ -191,21 +196,21 @@ def plot_patient_slices(pdf_filename, folder):
             
             cont = 0
             for i in range(len(vetor_left_img)):
-                imagem_reconstruida, mascara_reconstruida = build_image(vetor_left_img[i] + vetor_right_img[i], vetor_left_mask[i] + vetor_right_mask[i])
+                imagem_reconstruida, mascara_reconstruida, imagem_grid, mascara_grid = build_image(vetor_left_img[i] + vetor_right_img[i], vetor_left_mask[i] + vetor_right_mask[i])
                 
                 # Configurar a figura
                 fig, axs = plt.subplots(2, 1, figsize=(8, 8))
 
                 axs[0].imshow(imagem_reconstruida, cmap='gray')
+                axs[0].imshow(imagem_grid)
                 axs[0].set_title(f'{patient_id} - Imagem Reconstruída')
                 axs[0].axis('off')
 
                 axs[1].imshow(mascara_reconstruida, cmap='gray')
+                axs[1].imshow(mascara_grid)
                 axs[1].set_title(f'{patient_id} - Lesões Destacadas')
                 axs[1].axis('off')
-                
-                imagem_reconstruida, mascara_reconstruida = build_image(vetor_left_img[i] + vetor_right_img[i], vetor_left_mask[i] + vetor_right_mask[i])
-                
+                                
                 # Adicionar ao PDF
                 pdf.savefig(fig)
                 plt.close(fig)

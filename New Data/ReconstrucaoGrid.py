@@ -112,11 +112,11 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
                     has_displasia = calculate_label(grid_mask)
 
                     if has_displasia:
-                        color = 'blue'  # Grid destacado
-                        linewidth = 3  # Linha mais grossa
+                        color = 'blue'
+                        linewidth = 1 
                         highlighted_grids.append((y1, y2, x1, x2))  # Salva para pintar o espelho
                     else:
-                        color = 'red'  # Grid normal
+                        color = 'red'
                         linewidth = 1
 
                     plt.plot([x1, x2, x2, x1, x1], [y1, y1, y2, y2, y1], color=color, linewidth=linewidth)
@@ -145,7 +145,7 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
 
                     if has_displasia:
                         color = 'blue'
-                        linewidth = 3
+                        linewidth = 1
                     else:
                         color = 'red'
                         linewidth = 1
