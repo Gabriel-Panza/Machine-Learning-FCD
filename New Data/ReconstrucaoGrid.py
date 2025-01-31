@@ -62,10 +62,13 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
     with PdfPages(pdf_filename) as pdf:
         for patient_id in patients:
             patient_start_time = time()
-            print(f"Paciente: {patient_id}\n\n")
+            print(f"Paciente: {patient_id}")
+
+            grid_vec = []
+            imgs_vec = []
+            mask_vec = []
 
             fatia_path = f"{fatias_dir}/{patient_id}"  # Caminho das fatias do paciente
-            fatias_names = os.listdir(fatia_path)
 
             mascara_path = f"{masks_dir}/{patient_id}"  # Caminho das máscaras do paciente
 
@@ -73,22 +76,22 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
             grids_names = os.listdir(grid_path)
 
             # Removendo extensão dos arquivos para comparações
-            fatias_names = [f.split(".")[0] for f in fatias_names]
             grids_names = [g.split(".")[0] for g in grids_names]
 
-            for slice_img in fatias_names:
-                if slice_img not in grids_names:  # Verifica se existe grid para esta imagem
-                    continue
+            for item in grids_names:
+                img_data_path = f"{fatia_path}/{item}.nii.gz"
+                mask_data_path = f"{mascara_path}/{item}.nii.gz"
+                grid_data_path = f"{grid_path}/{item}.txt"
 
-                # Caminho dos dados para esta fatia
-                img_data_path = f"{fatia_path}/{slice_img}.nii.gz"
-                mask_data_path = f"{mascara_path}/{slice_img}.nii.gz"
-                grid_data_path = f"{grid_path}/{slice_img}.txt"
-
-                # Carrega dados da fatia
                 coordinates = load_one_coordinate(grid_data_path)
                 img_data = nib.load(img_data_path).get_fdata()
                 mask_data = nib.load(mask_data_path).get_fdata()
+
+                grid_vec.append(coordinates)
+                imgs_vec.append(img_data)
+                mask_vec.append(mask_data)
+
+            for img_data, mask_data, coordinates in zip(imgs_vec, mask_vec, grid_vec):
 
                 height, width = mask_data.shape  # Dimensões da imagem
 
@@ -128,7 +131,7 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
 
                     plt.plot([x1_mirror, x2_mirror, x2_mirror, x1_mirror, x1_mirror], 
                              [y1, y1, y2, y2, y1], 
-                             color='blue', linewidth=3)
+                             color='blue', linewidth=1)
 
                 # Mostrar a máscara correspondente
                 plt.subplot(1, 2, 2)
@@ -159,7 +162,7 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
 
                     plt.plot([x1_mirror, x2_mirror, x2_mirror, x1_mirror, x1_mirror], 
                              [y1, y1, y2, y2, y1], 
-                             color='blue', linewidth=3)
+                             color='blue', linewidth=1)
 
                 pdf.savefig()
                 plt.close()
@@ -167,7 +170,7 @@ def plot_images_with_grid_to_pdf_adjusted(fatias_dir, masks_dir, grid_dir, pdf_f
             # Tempo gasto por paciente
             patient_end_time = time()
             patient_duration = patient_end_time - patient_start_time
-            print(f"Tempo para o paciente {patient_id}: {patient_duration:.2f} segundos\n")
+            print(f"Tempo para o paciente {patient_id}: {patient_duration:.2f} segundos\n\n")
 
     end_time = time()
     total_duration = end_time - start_time
