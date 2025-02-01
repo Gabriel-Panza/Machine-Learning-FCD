@@ -1,3 +1,4 @@
+import cv2
 import nibabel as nib
 import numpy as np
 import os
@@ -114,7 +115,24 @@ def highlight_lesions(image, mask):
     Destaca as áreas de lesão na imagem, desenhando contornos azuis ao redor das máscaras.
     Para áreas sem lesão, desenha contornos vermelhos.
     """
-    highlighted_image = np.copy(image)
+    if image is None or mask is None:
+        raise ValueError("Erro: A imagem ou máscara é None.")
+
+    if not isinstance(image, np.ndarray):
+        raise TypeError(f"Erro: O tipo da imagem não é np.ndarray, mas {type(image)}")
+
+    if len(image.shape) < 2:
+        raise ValueError(f"Erro: A imagem tem formato inesperado: {image.shape}")
+
+    # Converte imagem para uint8 e garante formato BGR
+    if image.dtype != np.uint8:
+        image = (image * 255).astype(np.uint8)  # Normaliza caso esteja em float
+    if len(image.shape) == 2:  # Se for grayscale, converte para BGR
+        highlighted_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    elif len(image.shape) == 3 and image.shape[2] == 3:
+        highlighted_image = np.copy(image)
+    else:
+        raise ValueError(f"Erro: Formato inesperado da imagem {image.shape}")
     
     # Encontra os contornos das máscaras
     contours = measure.find_contours(mask, 0.5)
@@ -130,8 +148,13 @@ def highlight_lesions(image, mask):
         for i in range(len(contour) - 1):
             y1, x1 = map(int, contour[i])
             y2, x2 = map(int, contour[i + 1])
-            # Desenha uma linha entre os pontos do contorno
-            highlighted_image[y1:y2, x1:x2] = color
+            # Verifica se os pontos são válidos
+            # Verifica se os pontos estão dentro dos limites da imagem
+            if (0 <= x1 < highlighted_image.shape[1] and 0 <= y1 < highlighted_image.shape[0] and
+                0 <= x2 < highlighted_image.shape[1] and 0 <= y2 < highlighted_image.shape[0]):
+
+                # Usa cv2.line para evitar erros de broadcasting
+                cv2.line(np.array(highlighted_image), (x1, y1), (x2, y2), color, 1)
     
     return highlighted_image
 
@@ -202,12 +225,12 @@ def plot_patient_slices(pdf_filename, folder):
                 fig, axs = plt.subplots(2, 1, figsize=(8, 8))
 
                 axs[0].imshow(imagem_reconstruida, cmap='gray')
-                axs[0].imshow(imagem_grid)
+                axs[0].imshow(imagem_grid, cmap='gray')
                 axs[0].set_title(f'{patient_id} - Imagem Reconstruída')
                 axs[0].axis('off')
 
                 axs[1].imshow(mascara_reconstruida, cmap='gray')
-                axs[1].imshow(mascara_grid)
+                axs[1].imshow(mascara_grid, cmap='gray')
                 axs[1].set_title(f'{patient_id} - Lesões Destacadas')
                 axs[1].axis('off')
                                 
