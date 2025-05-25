@@ -398,25 +398,16 @@ FodyWeavers.xsd
 *.sln.iml
 
 Base_Informações/
-Old Data/Images/
-Old Data/recortes_flair_50x50/
-Old Data/recortes_T1_32x32/
-Old Data/recortes_T1_50x50/
 New Data/Patients_Displasya/
-New Data/Patients_Displasya_Normalized/
 New Data/Mascaras/
+New Data/Novo_Mascaras/
 New Data/Contralateral/
-New Data/Contralateral_Normalized/
-New Data/Pdf_CNN/
+New Data/Pdf_Final_NIfTI_Reconstruido/
 New Data/Pdf_SNN/
 New Data/Pdf/
-New Data/Fatias/
-New Data/Mask_Fatias/
+New Data/Fatias_Patients/
+New Data/Fatias_Mask/
 New Data/Coordenadas_grid/
 New Data/Novo_Contralateral/
 New Data/best_model.weights.h5
-Chinese Data/Pacientes com Mascara/
-Chinese Data/Mascaras/
-Chinese Data/Total de pacientes/
-Chinese Data/Contralateral/
 New Data/best_model.keras
