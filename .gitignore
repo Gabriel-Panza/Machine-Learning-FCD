@@ -403,6 +403,7 @@ New Data/Mascaras/
 New Data/Novo_Mascaras/
 New Data/Contralateral/
 New Data/Pdf_Final_NIfTI_Reconstruido/
+New Data/Pdf_SSCL/
 New Data/Pdf_SNN/
 New Data/Pdf/
 New Data/Fatias_Patients/
@@ -410,5 +411,3 @@ New Data/Fatias_Mask/
 New Data/Coordenadas_grid/
 New Data/Novas_Coordenadas_grid/
 New Data/Novo_Contralateral/
-New Data/best_model.weights.h5
-New Data/best_model.keras
