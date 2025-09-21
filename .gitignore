@@ -397,17 +397,15 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-Base_Informações/
-New Data/Patients_Displasya/
-New Data/Mascaras/
-New Data/Novo_Mascaras/
-New Data/Contralateral/
-New Data/Pdf_Final_NIfTI_Reconstruido/
-New Data/Pdf_SSCL/
-New Data/Pdf_SNN/
-New Data/Pdf/
-New Data/Fatias_Patients/
-New Data/Fatias_Mask/
-New Data/Coordenadas_grid/
-New Data/Novas_Coordenadas_grid/
-New Data/Novo_Contralateral/
+Old_Methods/Patients_Displasya/
+Old_Methods/Mascaras/
+Old_Methods/Contralateral/
+Old_Methods/Pdf_SSCL/
+Old_Methods/Pdf_SNN/
+Old_Methods/Pdf/
+Old_Methods/Fatias_Patients/
+Old_Methods/Fatias_Mask/
+Old_Methods/Coordenadas_grid/
+
+New_Methods/Patients_Displasya/
+New_Methods/Mascaras/
