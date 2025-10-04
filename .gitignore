@@ -408,6 +408,7 @@ Old_Methods/Fatias_Mask/
 Old_Methods/Coordenadas_grid/
 
 New_Methods/Patients_Displasya/
-New_Methods/Patients_Control/
+New_Methods/Patients_Control_OpenNeuro/
+New_Methods/Patients_Displasya_OpenNeuro/
 New_Methods/Mascaras/
 New_Methods/best_vit_model.pth
