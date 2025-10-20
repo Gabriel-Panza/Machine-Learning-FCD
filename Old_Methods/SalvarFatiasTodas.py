@@ -54,8 +54,8 @@ def adjust_unique_lesion_pieces_with_neighbors(subimages, current_index, total_s
 
     return subimages
 
-imagens = "New Data/Patients_Displasya"
-mascara = "New Data/Mascaras"
+imagens = "New_Methods/Patients_Displasya/T1"
+mascara = "New_Methods/Mascaras"
 
 excluded_patients = ["sub-54K08", "sub-87G01", "sub-89A03", "sub-90K10"]
 
@@ -81,45 +81,35 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
     processed_slices = 0
 
     # Diretório de saída para salvar as fatias
-    output_dir = f"New Data/Fatias/{img.split('_')[0]}"
-    output_dir_lesion = f"New Data/Mask_Fatias/{mask.split(' ')[0]}"
+    output_dir = f"New_Methods/Fatias/{img.split('_')[0]}"
+    output_dir_lesion = f"New_Methods/Mask_Fatias/{mask.split(' ')[0]}"
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(output_dir_lesion, exist_ok=True)
     
     # Loop para cada fatia axial
     for slice_idx in range(lesion_data.shape[2]):
-        # Pega a lesão da fatia axial atual
-        lesion_slice_data = lesion_data[:, :, slice_idx]
-        lesion_slice_data = np.where(lesion_slice_data>0.9, 1, 0)
-                
-        # Pega a fatia axial atual
-        slice_data = data[:, :, slice_idx]            
-                
-        # Total de pixels na subimagem
-        total_pixels = slice_data.size
-        # Número de pixels não-preto
-        non_zero_pixels = np.count_nonzero(slice_data)
-        # Proporção de pixels não-preto
-        non_black_ratio = non_zero_pixels / total_pixels if total_pixels > 0 else 0
+        if slice_idx>15 and slice_idx<150:
+            lesion_slice_data = lesion_data[:, :, slice_idx]
+            lesion_slice_data = np.where(lesion_slice_data>0.9, 1, 0)
+                    
+            slice_data = data[:, :, slice_idx]            
+                    
+            total_pixels = slice_data.size
+            non_zero_pixels = np.count_nonzero(slice_data)
+            non_black_ratio = non_zero_pixels / total_pixels if total_pixels > 0 else 0
+            
+            if non_black_ratio >= 0.05:
+                output_dir_lesion_slice = os.path.join(output_dir_lesion, f"Slice_{slice_idx:03}.nii.gz")
+                output_dir_slice = os.path.join(output_dir, f"Slice_{slice_idx:03}.nii.gz")
+
+                processed_slices += 1
+
+                subimage_nii = nib.Nifti1Image(lesion_slice_data, affine=np.eye(4), dtype=np.int64)
+                if (lesion_slice_data.size>0 and lesion_slice_data is not None):
+                    nib.save(subimage_nii, output_dir_lesion_slice)
+
+                subimage_nii = nib.Nifti1Image(slice_data, affine=np.eye(4))
+                if (slice_data.size>0 and slice_data is not None):
+                    nib.save(subimage_nii, output_dir_slice)
         
-        if non_black_ratio >= 0.04:
-            output_dir_lesion_slice = os.path.join(output_dir_lesion, f"Slice_{slice_idx:03}.nii.gz")
-            output_dir_slice = os.path.join(output_dir, f"Slice_{slice_idx:03}.nii.gz")
-
-            processed_slices += 1
-
-            # Converter o array numpy para um objeto NIfTI
-            subimage_nii = nib.Nifti1Image(lesion_slice_data, affine=np.eye(4), dtype=np.int64)
-            
-            # Salvar o arquivo NIfTI
-            if (lesion_slice_data.size>0 and lesion_slice_data is not None):
-                nib.save(subimage_nii, output_dir_lesion_slice)
-
-            # Converter o array numpy para um objeto NIfTI
-            subimage_nii = nib.Nifti1Image(slice_data, affine=np.eye(4))
-            
-            # Salvar o arquivo NIfTI
-            if (slice_data.size>0 and slice_data is not None):
-                nib.save(subimage_nii, output_dir_slice)
-    
     print(f"Total de fatias processadas do paciente {img.split('_')[0]}: {processed_slices}")
