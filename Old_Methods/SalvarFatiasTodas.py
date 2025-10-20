@@ -54,8 +54,8 @@ def adjust_unique_lesion_pieces_with_neighbors(subimages, current_index, total_s
 
     return subimages
 
-imagens = "New_Methods/Patients_Displasya/T1"
-mascara = "New_Methods/Mascaras"
+imagens = "Old_Methods/Patients_Displasya/T1"
+mascara = "Old_Methods/Mascaras"
 
 excluded_patients = ["sub-54K08", "sub-87G01", "sub-89A03", "sub-90K10"]
 
@@ -81,14 +81,14 @@ for img, mask in zip([f for f in os.listdir(imagens) if f.endswith(('.nii', '.ni
     processed_slices = 0
 
     # Diretório de saída para salvar as fatias
-    output_dir = f"New_Methods/Fatias/{img.split('_')[0]}"
-    output_dir_lesion = f"New_Methods/Mask_Fatias/{mask.split(' ')[0]}"
+    output_dir = f"Old_Methods/Fatias_Patients/{img.split('_')[0]}"
+    output_dir_lesion = f"Old_Methods/Fatias_Mask/{mask.split(' ')[0]}"
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(output_dir_lesion, exist_ok=True)
     
     # Loop para cada fatia axial
     for slice_idx in range(lesion_data.shape[2]):
-        if slice_idx>15 and slice_idx<150:
+        if slice_idx<150:
             lesion_slice_data = lesion_data[:, :, slice_idx]
             lesion_slice_data = np.where(lesion_slice_data>0.9, 1, 0)
                     
