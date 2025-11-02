@@ -1,45 +1,42 @@
 # Classificação de Displasia Cortical Focal com Redes Neurais
-Este projeto utiliza redes neurais convolucionais siamesas (Siamese Neural Networks) para classificar se um paciente apresenta ou não Displasia Cortical Focal (FCD) a partir de imagens de ressonância magnética do cérebro.
+Este projeto foca no desenvolvimento e comparação de arquiteturas de aprendizado profundo para a classificação de Displasia Cortical Focal (FCD) a partir de imagens de ressonância magnética (MRI) do cérebro. O objetivo é criar um sistema automatizado que auxilie especialistas na identificação desta condição, que é uma das causas mais comuns de epilepsia refratária (farmacorresistente).
 
 ## Objetivo
-Desenvolver um sistema automatizado que auxilie especialistas na identificação de displasia cortical focal, uma das causas mais comuns de epilepsia farmacorresistente, utilizando aprendizado profundo aplicado a imagens médicas.
+Desenvolver um sistema automatizado que auxilie especialistas na identificação de displasia cortical focal, utilizando aprendizado profundo aplicado a imagens médicas (MRI).
 
-## Estrutura do Projeto
-Preprocessamento de Imagens: Leitura de imagens em formato NIfTI (.nii.gz), extração de cortes e preparação de patches.
+## Estrutura do Projeto e Metodologias
+O repositório está organizado em duas abordagens principais, refletindo a evolução da pesquisa:
 
-Geração de Labels: As labels binárias são atribuídas com base em critérios de intensidade e presença de lesões (máscaras).
+### 1. `New_Methods` (Abordagem com Transformers)
+Esta pasta contém as implementações mais recentes, que exploram o uso de arquiteturas baseadas em Transformers para processamento de imagens médicas.
+* `pre_processing/`: Scripts e notebooks dedicados ao pré-processamento de dados específicos para os modelos Transformers.
+* `Transformers2D.ipynb`: Notebook para o desenvolvimento e treinamento de modelos baseados em Vision Transformers (ViT) aplicados a cortes 2D das imagens de MRI.
+* `Transformers3D.ipynb`: Notebook que explora o uso de Transformers para dados volumétricos (3D), processando múltiplos cortes ou o volume inteiro.
+* `pre_process.py`: Script de pré-processamento principal para esta abordagem.
 
-Tratamento de dados: Suporte a estratégias simples de aumento de dados, como rotação e flips, e suporte para estratégias simples de undersampling, onde são escolhidos um subconjunto randomico e menor de imagens, para balanceamento e robustez.
-
-Arquitetura Siamesa: CNNs gêmeas aplicadas em imagens do lado esquerdo e contralateral, com operações de subtração ou concatenação de embeddings.
-
-Treinamento Supervisionado: Uso de class_weight, EarlyStopping, ReduceLROnPlateau, e ModelCheckpoint para otimização.
-
-Avaliação do Modelo: Métricas como AUC, precisão, revocação, F1-score e matrizes de confusão são utilizadas.
+### 2. `Old_Methods` (Abordagem Siamesa e Contrastiva)
+Esta pasta contém as arquiteturas "clássicas" que serviram de base para o projeto, focadas em Redes Neurais Siamesas (SNN) e Aprendizado Contrastivo. A lógica central aqui é comparar patches da lesão com seu correspondente contralateral (do outro lado do cérebro).
+* `SNN.ipynb` / `SNN_Manual.ipynb`: Notebooks com a implementação da Rede Neural Siamesa. A CNN base extrai *embeddings* (características) de ambos os patches (lesão e contralateral), que são então subtraídos ou concatenados para uma classification final.
+* `Contrastive_SNN.ipynb` / `Contrastive_SSCL.ipynb`: Implementações que utilizam *loss* (função de perda) contrastiva. O objetivo é "ensinar" o modelo a aproximar os *embeddings* de pares da mesma classe (ex: dois patches saudáveis) e afastar os de classes diferentes (ex: um patch saudável e um com lesão).
+* `GridCreation.ipynb`, `PlotPairs.ipynb`, `SaveAllSlices.py`: Scripts utilitários para geração de dados, visualização de pares de imagens e salvamento de cortes para análise.
 
 ## Tecnologias e Bibliotecas
-Python 3.9+
-
-TensorFlow / Keras
-
-NumPy, SciPy, Matplotlib, OpenCV
-
-NiBabel (leitura de arquivos NIfTI)
-
-Scikit-learn (avaliação e divisão de dados)
+* **Core:** Python 3.9+
+* **Deep Learning:** TensorFlow / Keras
+* **Processamento de Imagens Médicas:** NiBabel (para leitura de arquivos NIfTI .nii.gz)
+* **Computação Científica:** NumPy, SciPy
+* **Manipulação de Imagens:** OpenCV
+* **Avaliação e Utilitários:** Scikit-learn, Matplotlib
 
 ## Dataset
-O projeto trabalha com um conjunto de dados privado contendo imagens de RM ponderadas em T1, associadas a máscaras de lesões (quando presentes). As imagens são divididas em conjuntos de treino, validação e teste por pacientes.
+O projeto utiliza um conjunto de dados privado contendo imagens de RM ponderadas em T1 (T1-weighted) e suas respectivas máscaras de lesão (quando presentes). Para garantir a imparcialidade, os dados são divididos em conjuntos de treino, validação e teste por paciente, evitando que dados do mesmo paciente estejam em conjuntos diferentes.
 
-## Como Funciona
-Entrada: Dois patches 2D (lado esquerdo e lado contralateral) de uma mesma coordenada.
+## Pipeline de Trabalho
+1.  **Pré-processamento:** Leitura dos arquivos NIfTI, extração de cortes (slices) e criação de *patches* (pequenos recortes) das regiões de interesse.
+2.  **Geração de Labels:** Atribuição de rótulos binários (lesão/não-lesão) com base nas máscaras e critérios de intensidade.
+3.  **Balanceamento de Dados:** Aplicação de técnicas de *data augmentation* (rotação, flips) e estratégias de *undersampling* para lidar com o desbalanceamento entre classes.
+4.  **Treinamento:** Otimização do modelo com técnicas como `class_weight` (pesos de classe), `EarlyStopping` (parada antecipada), `ReduceLROnPlateau` (redução da taxa de aprendizado) e `ModelCheckpoint` (salvamento do melhor modelo).
+5.  **Avaliação:** Análise de performance com métricas como Curva ROC/AUC, Acurácia, Precisão, Revocação, F1-Score e Matriz de Confusão.
 
-CNN Base: Aplica convoluções, pooling e flattening para gerar embeddings.
-
-Comparação: As saídas da CNN são subtraídas ou concatenadas.
-
-Decisão: O resultado é passado por camadas densas que classificam o par.
-
-## Licença
+## 📄 Licença
 Este projeto é de uso acadêmico e está sujeito às normas de uso dos dados médicos. Para uso comercial, entre em contato com os autores.
- 
